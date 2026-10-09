@@ -1,0 +1,12 @@
+# Core (pure numpy/scipy parts of gaiabias)
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+# Needed by gaiamock (Gaia scanning law + orbit fitter)
+astropy>=6.0
+healpy>=1.16
+joblib>=1.3
+# Step 3: downloading Gaia DR3 stars
+astroquery>=0.4.7
+# Tests
+pytest>=8
