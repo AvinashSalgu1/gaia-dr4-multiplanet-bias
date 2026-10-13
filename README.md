@@ -14,7 +14,7 @@ planet**, to measure how unmodelled companions bias:
 The code builds on [gaiamock](https://github.com/kareemelbadry/gaiamock)
 (El-Badry et al. 2024) for the Gaia scanning law, noise model and orbit
 optimiser, and is validated against the DR4 yield forecast of Lammers & Winn
-(2026, AJ 171, 18, [arXiv:2511.04673](https://arxiv.org/abs/2511.04673)),
+(2026, AJ 171, 18, https://doi.org/10.3847/1538-3881/ae21de),
 which assumes at most one planet per star.
 
 The full description of the method, every assumption and the reference results
