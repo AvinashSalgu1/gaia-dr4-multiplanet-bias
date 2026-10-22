@@ -5,4 +5,4 @@ from .orbits import Companion
 from .simulate import Star, simulate
 
 __all__ = ["Epochs", "Companion", "Star", "simulate"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

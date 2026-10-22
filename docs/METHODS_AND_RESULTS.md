@@ -163,13 +163,17 @@ The code has 45 automated tests. Highlights:
 
 ### Results for Q3 (DR4's alternative models)
 
-Percentage of all 20,000 systems: target correct / companion correct / wrong planet / acceleration or jerk only / nothing, with the false-alarm rate on the target-alone data in brackets.
+Percentage of all 20,000 systems in mutually exclusive categories (each system counted once, so each row adds up to 100%): both planets correct / target only / companion only (target missed) / a correct planet plus a wrong one / wrong planet only / acceleration or jerk only / nothing reported, with the false-alarm rate on the target-alone data in brackets. A planet of some kind is reported in the first five categories together (68.6% for one planet, 78.9% for the BIC choice).
 
-- One planet: 51.8 / 4.0 / 12.8 / 0.0 / 31.4 [0.8]
-- One planet + acceleration: 61.7 / 3.2 / 10.0 / 0.0 / 25.1 [0.9]
-- One planet + jerk: 63.5 / 2.6 / 8.9 / 0.0 / 24.9 [0.8]
-- Two planets (if justified): 64.2 / 7.1 / 15.3 / 0.0 / 23.0 [1.0]
-- Best model by BIC: 68.6 / 7.1 / 11.1 / 0.6 / 20.6 [1.0]
+| Analysis | Both | Target only | Companion only | Correct + wrong | Wrong only | Acc./jerk only | Nothing | [False alarm] |
+|---|---|---|---|---|---|---|---|---|
+| One planet | 0.0 | 51.8 | 4.0 | 0.0 | 12.8 | 0.0 | 31.4 | [0.8] |
+| One planet + acceleration | 0.0 | 61.7 | 3.2 | 0.0 | 10.0 | 0.0 | 25.1 | [0.9] |
+| One planet + jerk | 0.0 | 63.5 | 2.6 | 0.0 | 8.9 | 0.0 | 24.9 | [0.8] |
+| Two planets (if justified) | 5.2 | 55.3 | 1.2 | 4.4 | 11.0 | 0.0 | 23.0 | [1.0] |
+| Best model by BIC | 5.1 | 61.4 | 1.2 | 2.8 | 8.3 | 0.6 | 20.6 | [1.0] |
+
+"Target correct" in the text below counts every system where the target is found, whether or not a second planet is also reported (for the BIC choice 5.1 + 61.4 + part of 2.8 = 68.6%). Version 0.1.0 of this document listed target correct, companion correct and wrong planet as overlapping shares, so the two-orbit and BIC rows added up to more than 100%. The table is made by scripts/extended/g2_step2_exclusive.py.
 
 By kind of companion, target correct with one planet → best model by BIC:
 
@@ -292,6 +296,96 @@ Best model by BIC, independent / clustered multiplicity. Reported planets: 1,302
 - Look for hidden giants first around stars where DR4 adopted an acceleration, jerk or two-companion model: in the clustered case 93% of them have another giant.
 - Restrict precise RV follow-up to V ≤ 12 (HARPS) or V ≤ 10 (FEROS); plan 6 to 10 epochs to confirm the orbit and about 20 epochs over 3 years to look for a companion.
 
+## Extended analyses (version 0.2.0)
+
+Robustness tests and forecasts added in version 0.2.0. The scripts are in scripts/extended/ (see its README); results go to results/extended/.
+
+### Noise model (scripts/extended/g2_noise_robustness.py)
+
+The first 1,000 step 2 systems were refitted under four less favourable noise models, always using the reference uncertainties in the fit, as a DR4 user would: CCD measurements within a transit correlated with ρ = 0.05 (the DR4 pre-release gives ρ = −0.001 ± 0.007); an extra error shared by all transits within four days, at half the per-transit error; an unreported excess of 0.03 mas growing by 50% per magnitude fainter than G = 13; and all errors 30% larger than reported.
+
+- The detections lost because of the companion are the same under all five models: 12.6 to 13.8 percentage points (13.4 for the reference model).
+- The gain from DR4's alternative models is not: the BIC choice finds the target in 68.3% of systems against 51.5% for one orbit with the reference noise, but 50.7% against 42.9% when the errors are underestimated. Under each alternative the BIC choice reports a wrong planet more often than the one-orbit fit (14.7 to 18.0% against 12.1 to 13.7%). False alarms stay at or below 2.5%.
+- Conclusion: the effect of a companion does not depend on the noise model; the reliability of acceleration and two-orbit solutions depends on how well the uncertainties are calibrated.
+
+### Bayesian evidence versus the BIC (scripts/extended/g2_evidence.py, g2_evidence_truth.py)
+
+For 197 step 2 systems (50 with a weak target, 50 with an eccentric planet, 47 near the 2:1 period ratio, 50 at random) the evidence of the seven models was computed: the linear parameters are integrated analytically with Gaussian priors and the period, phase and eccentricity of each orbit are sampled with nested sampling (dynesty). All ln Z errors are below 1.
+
+- The two choices agree for 55% of systems (74% in the random group); 69% and 51% with priors three times narrower and wider. When the BIC adopts one orbit, the evidence agrees in 79 of 84 cases; when it adopts an orbit with a trend, the evidence prefers two orbits in 54 of 68.
+- Against the true systems both do equally well overall (target correct 55% for the BIC, 52 to 54% for the evidence; a wrong planet in 18 to 19% for both). Where the BIC adopts two orbits and the evidence one, the evidence is better (target correct 56 to 88% against 31 to 38%, wrong planet 0 to 25% against 47 to 50%): the BIC adopts the two-orbit model too easily. The subsets contain 8 to 55 systems.
+
+![Noise and evidence](figures/ext_noise_evidence.png)
+
+### Occurrence rate without a power law (scripts/extended/g1_rate_binned.py)
+
+The step 3 inference was repeated with one free rate per mass-period cell and no assumed shape, using the injection response matrix.
+
+- Only cells in which at least 5% of the injected planets are recovered can be measured, all at 3 to 13 M_J. There the rate for the real systems is 0.91 to 1.04 times the truth, and 0.94 to 0.99 times the rate for the same planets fitted alone.
+- Cells holding 62 to 68% of the simulated giants, mostly below 3 M_J, have too little response for any rate to be measured without assuming a shape. The large full-range biases of the power-law fit come from extrapolating into these cells.
+
+![Binned rate](figures/ext_rate_binned.png)
+
+### Multiplicity from the mix of DR4 solutions (scripts/extended/g1_multiplicity_signal.py)
+
+The share of stars with a reported planet whose adopted model is not a plain orbit rises from 5% when no host has a second giant to 25% when 79% do. Because this share is observable, it constrains multiplicity: with 3,000 reported planets to about ±0.02 to 0.03 (statistical only; the dependence on the noise model and the selection rule is not included).
+
+![Multiplicity signal](figures/ext_multiplicity_signal.png)
+
+### Dynamical stability (scripts/extended/g2_stability_nbody.py, g1_stable_scan.py)
+
+All 38,191 neighbouring giant pairs of the step 3 population were integrated with rebound (WHFast, MEGNO) for 100,000 inner orbits. Unstable = close encounter within one mutual Hill radius, ejection or MEGNO > 4.
+
+- 72% of pairs are unstable; 75% (independent) and 87% (clustered) of multi-giant systems contain an unstable pair. Instability depends mainly on mutual inclination: 30 to 40% below 30°, 86 to 89% above 60°. The Hill criterion used in the simulation is not sufficient for inclined pairs.
+- Repeating the multiplicity scan with only the systems whose pairs all survive gives, in the well-measured region, 0.94 to 0.99 (one orbit) and 0.95 to 0.98 (BIC) times the rate of the same planets fitted alone, the same 1 to 6% effect as with all systems within the bootstrap ranges. The full-range power-law fit becomes unreliable for this subsample.
+
+![Stability](figures/ext_stability.png)
+
+### Warning flags on held-out stars (scripts/extended/g1_flags_heldout.py)
+
+The stars were split at random; thresholds were chosen on one half and scored on the other. The default rule (adopted model not a plain orbit, significance < 5, period > 0.7 T, eccentricity > 0.5) flags 72 to 75% of inaccurate planets, 48% of flagged planets are inaccurate and 47 to 50% of accurate planets are flagged. Tuned thresholds do not generalise better in both scenarios. The number of flags is a usable calibration: inaccurate in 23% of cases with no flag, 29 to 35% with one, 67 to 79% with two or three.
+
+![Flags on held-out stars](figures/ext_flags_heldout.png)
+
+### Brown dwarfs and stellar binaries (scripts/extended/g2_mixed_flags.py, fig_binaries.py)
+
+Brown dwarfs (13 to 80 M_J, 0.6% of stars) and stellar companions (mass ratio 0.1 to 1, Raghavan et al. 2010; 7.7% of stars at periods of 0.05 to 16 yr) were added to random step 3 stars. The photocentre orbit is the primary's reflex orbit scaled by (q/(1+q) − β)/(q/(1+q)), with β the companion's share of the G-band light from the main-sequence mass-magnitude relation, and is simulated as a dark companion with the same angular orbit. The same DR3 RUWE cut is applied.
+
+- No brown dwarf is reported with a planetary mass. Of 6,000 stellar binaries, 1,011 have a planet-like photocentre orbit (apparent mass below 13 M_J), mostly near-twins; 211 of these are large enough to detect, and 23 are reported as planets after the DR4-like fits and the RUWE cut, with a median apparent mass of 8.8 M_J for companions of about 0.27 M_sun, all as plain orbits.
+- At these rates binaries are 8 to 10% of reported planets. The flags catch 60 to 62% of them; recall falls by about 3 points, precision rises by about 5, and planets with no flag are inaccurate or not planets in 29 to 30% of cases instead of 23%. A DR4 planet sample therefore needs Gaia RVS velocities or one RV spectrum per target. These numbers rest on 23 simulated impostors and a simple binary population.
+
+![Binaries posing as planets](figures/ext_binaries.png)
+
+### Census of known planet hosts (scripts/extended/g2_census.py)
+
+For every host of a planet with P < 200 d within 200 pc with a known distance, stellar mass and G magnitude (1,214 of 3,987 hosts in the NASA Exoplanet Archive composite table, queried 21 October 2026), outer companions of 0.3, 1, 3 and 10 M_J with periods of 0.5 to 12 yr were injected six times per grid point into simulated DR4 data with the host's own scanning pattern, and fitted with the one-orbit model. Hosts are classed by their inner planets.
+
+| Inner-planet class | Hosts simulated | ≥ 50% detection at P = 3 yr (3 / 1 / 0.3 M_J) | Expected detections at the field rate (68%; 95%) | At 3 × field | Smallest ratio to field at 3σ | Expected 0.3–1 M_J |
+|---|---|---|---|---|---|---|
+| Hot Jupiters (P < 10 d) | 178 | 43 / 10 / 0 | 4.9 (3–7; 1–10) | 14.6 | 2.4 | 0.1 |
+| Warm Jupiters (10–200 d) | 112 | 43 / 11 / 2 | 4.3 (2–6; 1–9) | 12.8 | 2.5 | 0.2 |
+| Small planets | 851 | 497 / 262 / 87 | 33 (27–39; 22–45) | 99 | 1.5 | 2.6 |
+| Other | 73 | 28 / 7 / 0 | 2.7 (1–4; 0–6) | 8.0 | 2.8 | 0.1 |
+
+A 3 M_J companion with a 3-yr period is detected out to about 100 pc, 1 M_J to about 50 pc and 0.3 M_J to about 20 pc. Saturn-mass companions are expected around fewer than three hosts in any class.
+
+![Census](figures/ext_census.png)
+
+### What DR4 alone measures (scripts/extended/g2_observability.py)
+
+For a 1.0 and a 0.5 M_sun star at 25, 50 and 100 pc, companions of 0.19 to 30 M_J at 0.3 to 30 au were injected and classified as a full orbit (significance ≥ 5, inclination and node measured), a poorly constrained orbit, an acceleration only, or no detection. Full orbits need at least about 2.4 M_J at 1 to 2.4 au for a Sun-like star at 25 pc and 4.5 M_J or more at 50 to 100 pc; for the M dwarf, 1.3 to 2.4 M_J at 25 to 50 pc. Beyond about 5 au DR4 alone almost never gives a full orbit; companions there are seen only as accelerations, with mass and separation degenerate. The grid has about five injections per cell.
+
+![Observability](figures/ext_observability.png)
+
+### Radial-velocity confirmation (scripts/extended/g1_rv_grid.py)
+
+200 simulated two-year campaigns per grid point from La Silla (target at declination −30°, inclination 60°), with the Gaia orbit as prior, epochs near the predicted RV extremes or at random in the season, and confirmation defined by a free-phase fit at the Gaia period excluding zero amplitude at 5σ. Planning precisions at V = 8: HARPS 1.0, FEROS 5.0, CORALIE 6.0 m/s (floors 0.5, 4, 5 m/s), with 2, 5 or 10 m/s stellar jitter.
+
+- With 10 epochs, FEROS and CORALIE confirm 79 to 100% of 3 M_J orbits within 2 au for V ≤ 10, but fewer than 90% of 1 M_J orbits at every grid point; HARPS confirms 74 to 99% of 1 M_J orbits within 2 au for V ≤ 12 with 2 to 5 m/s jitter.
+- Beyond about 3 au a two-year programme confirms at most about 80% of orbits even for 3 M_J at V = 9. One-year orbits are harder because the observing season samples similar phases each year.
+
+![RV grid](figures/ext_rv_grid.png)
+
 ## Scaling up and running on a cluster
 
 All steps are resumable: each finished fit is written to disk as it completes, and a rerun continues where it stopped. What to change for a bigger run:
@@ -314,8 +408,9 @@ The DR4 pre-release (June 2026) provides per-CCD epoch astrometry for 12 sources
 ## Caveats
 
 - Our "best model by BIC" is an assumption about how DR4 chooses between its models; DR4's real processing and acceptance rules are not yet published. A DR3-like pipeline would try orbits only for stars with RUWE > 1.4, which would exclude most planet hosts (Q5); in that case most planets would be found by users fitting the epoch astrometry, which is what our analyses represent.
-- Planet-planet interactions are ignored (orbits are added); orbits are not assumed to be coplanar.
-- Stellar and brown-dwarf companions are not simulated.
+- Planet-planet interactions are ignored (orbits are added); orbits are not assumed to be coplanar. An N-body check (extended analyses) shows that 72% of the simulated neighbouring pairs are dynamically unstable, mostly the strongly inclined ones; the multiplicity bias in the well-measured region is the same when only stable systems are kept.
+- Stellar and brown-dwarf companions are not in the reference population. A separate test adds them (extended analyses): stellar binaries with nearly equal components can be reported as planets.
+- The BIC choice appears to adopt the two-orbit model too easily compared with the Bayesian evidence (extended analyses).
 - Star masses come from the mass-magnitude relation, not Gaia's FLAME masses.
 - The occurrence-rate bias depends on the assumed multiplicity; the scan covers 0 to 79% of hosts with a second giant. Within multi-giant systems the period and mass distribution is that of the occurrence model with the stability requirement.
 - The period rule is a linearised approximation to L&W's MCMC rule, checked on a small sample.
@@ -323,10 +418,11 @@ The DR4 pre-release (June 2026) provides per-CCD epoch astrometry for 12 sources
 
 ## Possible extensions
 
-- Stellar and brown-dwarf companions in the RUWE and bias study.
-- Coplanar or near-resonant multi-planet systems, with N-body orbits instead of added Keplerian orbits.
+- A planet population drawn to be dynamically stable from the start, and nearly coplanar systems, as the reference population.
+- Stellar and brown-dwarf companions with properties taken from Gaia DR3 non-single-star solutions, in the RUWE and occurrence-rate analysis.
+- Planets in binaries (a planet orbiting one star of a binary): the binary appears as a slow curvature over the DR4 span and the planet's signal is diluted by the companion's light; a periodogram of the residuals followed by a joint fit, tested on simulated hierarchical systems.
 - Larger step 3 samples (all selected stars, or the full sky) on a computing cluster.
-- Checking the predictions against the real DR4 catalogue once it is released.
+- Running the pipeline on the real DR4 epoch astrometry: completeness by injection into the real data, and occurrence rates with the multiplicity correction.
 
 ## How to reproduce
 
@@ -345,3 +441,9 @@ See the README for installation, the order in which to run the scripts, and the 
 - Bryan, M. L. et al. 2016, statistics of long-period companions to hosts of known giant planets.
 - Goodman, J. & Weare, J. 2010, ensemble samplers with affine invariance.
 - Riello, M. et al. 2021, Gaia EDR3 photometric content and validation (G, BP, RP to Johnson V relation).
+- Raghavan, D. et al. 2010, ApJS 190, 1, a survey of stellar families: multiplicity of solar-type stars.
+- Winters, J. G. et al. 2019, AJ 157, 216, the solar neighbourhood XLV: the stellar multiplicity rate of M dwarfs within 25 pc.
+- Speagle, J. S. 2020, MNRAS 493, 3132, dynesty: a dynamic nested sampling package.
+- Rein, H. & Liu, S.-F. 2012, A&A 537, A128, rebound; Rein, H. & Tamayo, D. 2015, MNRAS 452, 376, WHFast.
+- Cincotta, P. M. & Simó, C. 2000, A&AS 147, 205, the MEGNO chaos indicator.
+- NASA Exoplanet Archive, Planetary Systems Composite Parameters, doi:10.26133/NEA13.

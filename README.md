@@ -18,7 +18,8 @@ optimiser, and is validated against the DR4 yield forecast of Lammers & Winn
 which assumes at most one planet per star.
 
 The full description of the method, every assumption and the reference results
-is in **[docs/METHODS_AND_RESULTS.md](docs/METHODS_AND_RESULTS.md)**.
+is in **[docs/METHODS_AND_RESULTS.md](docs/METHODS_AND_RESULTS.md)**. Changes between
+versions are listed in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
@@ -268,6 +269,19 @@ assumptions in `src/gaiabias/rv.py`).
 
 ![Step 4 RV](docs/figures/step4_rv.png)
 
+### Extended analyses — robustness tests and forecasts (version 0.2.0)
+
+`scripts/extended/` adds tests of the step 2 and step 3 results and forecasts for follow-up:
+step 2 outcomes as mutually exclusive categories, less favourable noise models, Bayesian
+evidence against the BIC choice, an occurrence rate without an assumed power law, the
+multiplicity signal in the mix of DR4 solutions, an N-body check of every simulated planet
+pair, the warning flags on held-out stars and with brown-dwarf and stellar-binary
+contaminants, a census of known inner-planet hosts with their DR4 sensitivity to outer
+giants, what DR4 measures as full orbits or accelerations, and RV campaigns from La Silla.
+They need `pip install -r requirements-extended.txt` (rebound, dynesty); see
+[scripts/extended/README.md](scripts/extended/README.md) for what to run and
+[docs/METHODS_AND_RESULTS.md](docs/METHODS_AND_RESULTS.md) for the results.
+
 ### Optional — check against real DR4 data
 
 The Gaia DR4 epoch-astrometry pre-release (12 sources) can be used to test the
@@ -347,6 +361,7 @@ src/gaiabias/
   step2/               simulation, analyses, sweeps and plots of step 2
   plotstyle.py         shared figure style
 scripts/               one script per step (see Section 2)
+scripts/extended/      robustness tests and forecasts (version 0.2.0; own README)
 tests/                 unit tests (numpy/scipy only) and gaiamock integration tests
 docs/                  methods and results; example figures
 ```

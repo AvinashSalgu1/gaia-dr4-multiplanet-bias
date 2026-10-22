@@ -1,0 +1,3 @@
+# extra packages for scripts/extended (the g2_* analyses), on top of requirements.txt
+rebound>=4.0
+dynesty>=2.1
