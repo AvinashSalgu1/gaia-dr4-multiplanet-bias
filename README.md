@@ -282,6 +282,69 @@ They need `pip install -r requirements-extended.txt` (rebound, dynesty); see
 [scripts/extended/README.md](scripts/extended/README.md) for what to run and
 [docs/METHODS_AND_RESULTS.md](docs/METHODS_AND_RESULTS.md) for the results.
 
+Expected plots (in `results/extended/`):
+
+- `fig_noise_evidence.png` (`fig_noise_evidence.py`, after `g2_noise_robustness.py` and
+  `g2_evidence.py`) — step 2 outcomes under five noise models (a); detections lost to the
+  companion and targets gained by the BIC choice (b); the model chosen by the BIC against the
+  model with the highest Bayesian evidence (c). Expect the loss to the companion to stay near
+  13 points under every noise model, while the BIC gain drops from ~17 to ~8 points when
+  errors are underestimated; the BIC and evidence agree for single orbits.
+
+![Noise and evidence](docs/figures/ext_noise_evidence.png)
+
+- `rate_binned/rate_binned.png` (`g1_rate_binned.py`) — the injection response matrix from
+  true to reported mass-period cells (left) and the inferred/true rate in each measurable cell
+  (right). Expect only 3–13 M_J cells to be measurable, with ratios near 1.
+
+![Binned rate](docs/figures/ext_rate_binned.png)
+
+- `multiplicity_signal/multiplicity_signal.png` (`g1_multiplicity_signal.py`) — share of DR4
+  solutions that are not a plain orbit against the fraction of hosts with a second giant
+  (left), and the statistical precision on that fraction (right). Expect a rise from ~5% to ~25%.
+
+![Multiplicity signal](docs/figures/ext_multiplicity_signal.png)
+
+- `fig_stability.png` (`fig_stability.py`, after `g2_stability_nbody.py --all` and
+  `g1_stable_scan.py`) — share of unstable pairs against mutual inclination (a) and spacing
+  (b), and the multiplicity bias with all systems and with stable systems only (c). Expect most
+  inclined pairs to be unstable, and the bias in the well-measured region to stay at a few per cent.
+
+![Stability](docs/figures/ext_stability.png)
+
+- `flags_heldout/flags_heldout.png` (`g1_flags_heldout.py`) — recall, precision and
+  false-positive rate of the warning flags on held-out stars (left) and the share of inaccurate
+  planets against the number of flags raised (right). Expect recall ~72–75% and precision ~48%.
+
+![Flags on held-out stars](docs/figures/ext_flags_heldout.png)
+
+- `fig_binaries.png` (`fig_binaries.py`, after `g2_mixed_flags.py`) — how a luminous companion
+  reduces the photocentre wobble (a), the mass Gaia would infer for simulated stellar binaries
+  (b), and how many end up reported as planets (c). Expect near-twin binaries to look like
+  giant planets, and a few dozen of 6,000 binaries to survive as clean planetary orbits.
+
+![Binaries posing as planets](docs/figures/ext_binaries.png)
+
+- `fig_census.png` (`fig_census.py`, after `g2_census.py`) — for each known inner-planet host
+  within 200 pc, the DR4 detection probability of an outer giant of 3, 1 and 0.3 M_J with a
+  3-yr period against distance (a–c), and the forecast number of detections per class (d).
+  Expect 3 M_J companions to be found to ~100 pc and Saturn-mass ones only within ~20 pc.
+
+![Census](docs/figures/ext_census.png)
+
+- `observability/observability.png` (`g2_observability.py`) — for a Sun-like star and an M
+  dwarf at 25, 50 and 100 pc, which companions DR4 measures as full orbits (shading) and which
+  it detects at all (solid line). Expect no full orbits beyond ~5 au, only accelerations.
+
+![Observability](docs/figures/ext_observability.png)
+
+- `rv_grid/rv_grid.png` (`g1_rv_grid.py`) — share of two-year La Silla RV campaigns that
+  confirm a Gaia orbit with 10 epochs, for HARPS, FEROS and CORALIE, 1 and 3 M_J planets,
+  V = 9–12 and different jitter. Expect FEROS and CORALIE to work for 3 M_J within ~2 au
+  around bright stars, but not for 1 M_J.
+
+![RV grid](docs/figures/ext_rv_grid.png)
+
 ### Optional — check against real DR4 data
 
 The Gaia DR4 epoch-astrometry pre-release (12 sources) can be used to test the

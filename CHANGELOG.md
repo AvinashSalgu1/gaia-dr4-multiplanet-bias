@@ -53,7 +53,7 @@ known planet hosts, and forecasts for follow-up. The simulation, fitting and ste
   binaries can be reported as planets; the BIC adopts the two-orbit model too easily compared
   with the Bayesian evidence. New extensions: a stable and coplanar reference population, binaries
   from Gaia DR3 non-single-star solutions, and planets in binaries.
-- README: links to the extended analyses and this changelog.
+- README: the extended analyses with their expected plots, and a link to this changelog.
 - Version 0.1.0 → 0.2.0.
 
 ### Main new results
