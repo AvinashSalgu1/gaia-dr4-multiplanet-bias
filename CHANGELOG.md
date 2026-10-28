@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.3.0 (27 October 2026)
+
+Whole-sky analyses, alternative planet populations, comparisons with published work, the input
+pipeline for real DR4 data, and templates for running at scale. The fitting code is unchanged;
+the default stellar sample and output folders changed (see below), so 0.2.0 numbers are
+reproduced only with `--circles`.
+
+### Changed
+- Step 3 uses the whole sky within 250 pc by default: the Gaia DR3 stars are downloaded in 768
+  HEALPix level-3 tiles, each queried as a range of Gaia source_ids, and every selected star is
+  fitted (`--stars` default 0 = all; 2,311,408 stars). Results go to `results/step3_allsky/`.
+  Whole-sky numbers are counted directly instead of scaled up from a 25% sample. `--circles`
+  reproduces the earlier 25% sample of 3° circles in `results/step3_gaia/`.
+- Extended scripts read the whole-sky step 3 run by default (`--root` for another folder).
+- `g2_evidence.py` keeps all cores busy (tasks streamed as they finish).
+
+### Added
+- Population variants in step 3 (`--variant`): `coplanar` (mutual inclinations from a Rayleigh
+  distribution with σ = 2°), `stable` (every multi-planet system integrated with rebound/WHFast
+  for 10^4 inner orbits and redrawn if MEGNO shows chaos), `lowecc` (eccentricities of planets in
+  multi-planet systems from a Rayleigh distribution with σ = 0.1). Default draws are unchanged.
+- `step3.py --build-only`: writes stars, planets and the job list, for clusters.
+- `scripts/extended/g1_pl_drift.py`: why the power-law rate of planets fitted alone drifts with
+  multiplicity (population-averaged against S/N-aware completeness).
+- `scripts/extended/g1_lw_yield.py`: the step 3 planets counted with the Lammers & Winn rule.
+- `scripts/extended/g2_go_checks.py`: comparison with Greenfield & Owen (2026) — eccentricity
+  and mass of one-orbit fits to circular 2:1 pairs, the single-planet detection threshold, and
+  the threshold for a second planet near and away from 2:1.
+- `src/gaiabias/dr4.py` and `scripts/dr4_fit.py`: real DR4 epoch astrometry (pre-release
+  VOTable; ECSV, CSV or FITS through astropy) reduced to per-transit positions and fitted with the
+  seven models; resumable and splittable. `data/dr4_prerelease/` holds the 12-source pre-release.
+- `tools/slurm/`: SLURM job arrays for step 3 and the DR4 fits.
+- `tools/remote_runs/`: template for running jobs on a shared server without a queue through a
+  GitHub Actions runner and a private repository.
+- Tests for the variants, the N-body screen and the DR4 pipeline.
+
+### Removed
+- The pairwise stability figure from the documentation; the `stable` variant replaces the
+  post-hoc check (the scripts remain).
+
 ## 0.2.0 (22 October 2026)
 
 Robustness tests of the step 2 and step 3 results, contamination by stellar companions, a census of

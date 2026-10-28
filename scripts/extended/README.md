@@ -1,11 +1,12 @@
 # Extended analyses
 
-Robustness tests and forecasts that build on steps 2 and 3: model selection, noise, rate
-inference, stability of the simulated systems, contamination by stellar companions, a census of
+Robustness tests, comparisons and forecasts that build on steps 2 and 3: model selection, noise,
+rate inference, the drift of the power law of planets fitted alone, comparisons with Lammers &
+Winn (2026) and Greenfield & Owen (2026), stability of the simulated systems, contamination by stellar companions, a census of
 known planet hosts, what DR4 can measure, and radial-velocity follow-up. Results go to
 `results/extended/<name>/` (`summary.txt`, figures and small tables). The full description and
 the results are in [docs/METHODS_AND_RESULTS.md](../../docs/METHODS_AND_RESULTS.md),
-section "Extended analyses (version 0.2.0)".
+section "Extended analyses".
 
 Scripts named `g1_*` reuse existing step 2 or step 3 fits and run in a minute or two; `g2_*`
 scripts make new Gaia fits (gaiamock) or integrations (rebound, dynesty). `fig_*` scripts make
@@ -18,9 +19,12 @@ the combined figures from the results.
 | `g2_evidence.py` | Does the Bayesian evidence choose the same model as the BIC? (`--prior-scale` for other priors) | gaiamock, dynesty | ~1 h per prior scale |
 | `g2_evidence_truth.py` | Which choice is right, judged against the true systems? | step 2 results, evidence runs | seconds |
 | `g1_rate_binned.py` | Occurrence rate without assuming a power law; injection response matrix | step 3 results | ~1 min |
+| `g1_pl_drift.py` | Why does the power-law rate of planets fitted alone drift with multiplicity? | step 3 results | ~1 min |
+| `g1_lw_yield.py` | The step 3 planets counted with the Lammers & Winn rule and noise | step 3 results | seconds |
+| `g2_go_checks.py` | Comparison with Greenfield & Owen: `resoecc`, `single`, `second` (`--prior-scale`) | gaiamock, dynesty | 1–6 h per part (64 cores) |
 | `g1_multiplicity_signal.py` | Does the mix of DR4 solution types constrain how many hosts have a second giant? | step 3 results | ~1 min |
 | `g1_export_pairs.py` | Writes the planet pairs for the N-body check (`--all` for every pair) | step 3 results | seconds |
-| `g2_stability_nbody.py` | Are the simulated pairs dynamically stable? (`--all`: all ~38,000 pairs) | rebound | 2 min (600 pairs), ~2 h (all) |
+| `g2_stability_nbody.py` | Are the simulated pairs dynamically stable? (`--all`: every pair; superseded by `step3.py --variant stable`) | rebound | 2 min (600 pairs), ~2 h (all) |
 | `g1_stable_scan.py` | Multiplicity scan with only the stable systems | step 3 results, N-body run | ~1 min |
 | `g1_flags_heldout.py` | Warning flags scored on stars not used to choose them | step 3 results | ~1 min |
 | `g2_mixed_flags.py` | Warning flags with brown dwarfs and stellar binaries added | step 3 results, gaiamock | ~1 h |
@@ -30,7 +34,7 @@ the combined figures from the results.
 | `fig_noise_evidence.py`, `fig_census.py`, `fig_stability.py`, `fig_binaries.py` | Combined figures | the results above | seconds |
 
 Every `g2_*` script resumes where it stopped and has `--quick` for a short test run; most also
-have `--synthetic` (fake scanning law, code test only). `--root /path/to/step3_gaia` points the
+have `--synthetic` (fake scanning law, code test only). `--root /path/to/step3_results` points the
 `g1_*` scripts at a step 3 results folder elsewhere.
 
 ## Installation

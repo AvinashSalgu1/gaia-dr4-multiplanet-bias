@@ -11,6 +11,12 @@ planet**, to measure how unmodelled companions bias:
 - the **radial-velocity effort** needed to confirm DR4 planets or find hidden
   companions.
 
+It runs on real Gaia DR3 stars over the whole sky within 250 pc (about 2.3 million
+stars), tests its assumptions with alternative planet populations, compares with
+published work (Lammers & Winn 2026; Greenfield & Owen 2026), and includes the input
+pipeline for the real DR4 epoch astrometry. Templates in `tools/` run the long jobs on
+a SLURM cluster or on a shared server.
+
 The code builds on [gaiamock](https://github.com/kareemelbadry/gaiamock)
 (El-Badry et al. 2024) for the Gaia scanning law, noise model and orbit
 optimiser, and is validated against the DR4 yield forecast of Lammers & Winn
@@ -38,9 +44,12 @@ versions are listed in **[CHANGELOG.md](CHANGELOG.md)**.
 ## 1. Installation
 
 Requirements: Linux or macOS, Python ≥ 3.10, a C compiler and the GNU
-Scientific Library (GSL), a few GB of free disk space (gaiamock's scan files,
-the Gaia star download and the step 3 results), and internet access for the
-one-off downloads.
+Scientific Library (GSL), about 5 GB of free disk space (gaiamock's scan files,
+the whole-sky Gaia star download and the step 3 results), and internet access for
+the one-off downloads. Without administrator rights (on a shared server, for
+example), Miniforge provides everything, GSL included:
+`conda create -n gaia python=3.12 numpy scipy matplotlib astropy healpy joblib astroquery pytest rebound dynesty gsl`,
+then compile gaiamock with `-I$CONDA_PREFIX/include -L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib`.
 
 ### 1a. gaiamock (not pip-installable)
 
@@ -76,7 +85,7 @@ export GAIAMOCK_DIR=/path/to/gaiamock
 ### 1c. Check the installation
 
 ```bash
-pytest                          # ~50 tests; the gaiamock ones are skipped if gaiamock is missing
+pytest                          # ~60 tests; the gaiamock ones are skipped if gaiamock is missing
 python scripts/check_setup.py   # finds gaiamock, recovers one planet, times one fit
 ```
 
@@ -98,7 +107,7 @@ numbers will differ slightly through random sampling.
 |---|---|---|---|---|
 | 1 | `python scripts/step1_validate_single.py` | gaiamock | 3 core-h | `results/step1_single.png` |
 | 2 | `python scripts/step2.py run`, then `plot` | gaiamock | 70 core-h | `results/step2_*.png`, `step2_summary.txt` |
-| 3 | `python scripts/step3.py` | gaiamock, internet (first run) | 180 core-h | `results/step3_gaia/` |
+| 3 | `python scripts/step3.py` | gaiamock, internet (first run) | ~1,000–1,100 core-h (whole sky; 15–17.5 h on 64 cores) | `results/step3_allsky/` |
 | 4 | `python scripts/step4.py` | step 3 results | minutes | `results/step4/` |
 | (opt.) | `python scripts/check_dr4_prerelease.py` | DR4 pre-release file | seconds | `results/dr4_prerelease/` |
 
@@ -187,33 +196,42 @@ python scripts/step3.py --analyse         # redo the summary and figures only
 ```
 
 1. **Stars.** Downloads Gaia DR3 stars closer than 250 pc (parallax S/N > 10)
-   in random 3° circles covering 25% of the sky (`--sky-fraction`, up to 0.52),
+   over the whole sky, in 768 HEALPix tiles (each a range of Gaia source_ids),
    from CDS VizieR or the ESA Gaia archive, into `data/gaia_dr3_250pc/`. The
-   download resumes if interrupted. The Lammers & Winn selection (main
-   sequence, their distance limit) and RUWE ≤ 1.4 are then applied (about
-   580,000 stars for 25% of the sky).
-2. **Planets.** A random subset of stars (`--stars`, default 300,000) receives
+   download resumes if interrupted; `--sky-fraction` takes a random subset of
+   tiles. The Lammers & Winn selection (main sequence, their distance limit) and
+   RUWE ≤ 1.4 are then applied (about 2.3 million stars over the whole sky).
+   `--circles` reproduces the 25% sample of random 3° circles used up to version
+   0.2.0 (about 580,000 stars), with results in `results/step3_gaia/`.
+2. **Planets.** All selected stars (or a random subset, `--stars N`) receive
    giant planets (0.3–13 M_J, 0.1–30 au) from the California Legacy Survey
    occurrence model, under two multiplicity scenarios with the same mean number
    of giants per star: *independent* and *clustered* (calibrated on the
    outer-companion rate of Bryan et al. 2016). All multi-planet systems are
-   Hill-stable.
+   Hill-stable. `--variant coplanar,stable` makes every multi-planet system
+   nearly coplanar and checks it with an N-body integration when it is drawn;
+   `--variant lowecc` gives planets in multi-planet systems low eccentricities
+   (results in `results/step3_allsky_<variant>/`).
 3. **Fits.** Every star with planets is fitted with all its planets (A) and with
-   each planet alone (B); 15,000 single-planet injections give the completeness
-   (`--inj-fits`), and planet-free stars give the RUWE of single stars.
+   each planet alone (B); single-planet injections give the completeness
+   (`--inj-fits`, default 15,000; the reference run uses 50,000), and planet-free
+   stars give the RUWE of single stars. The whole-sky run takes about 1,100
+   core-hours.
 4. **Analysis.** Occurrence rates per mass–period bin and as a forward-modelled
    power law, compared with the true rate; RUWE; and a **multiplicity scan**
    (bias and yield versus the fraction of giant hosts with a second giant),
    built by reweighting the existing fits, so no new fits are needed.
 
-**Expected:** `results/step3_gaia/summary.txt`, `multiplicity_scan.csv` and
+**Expected:** `results/step3_allsky/summary.txt`, `multiplicity_scan.csv` and
 five figures.
 
 - `step3_multiplicity.png` — the main result. Left: inferred ÷ true
   occurrence rate over the whole giant-planet range; the one-orbit (Lammers &
-  Winn-like) analysis drifts low as multiplicity increases (≈ 0.6 at 80%),
-  the BIC choice much less. Centre: in the well-measured bins (3–13 M_J,
-  1–8 yr) the bias stays within ~0–8%. Right: DR4 yield for the whole sky
+  Winn-like) analysis drifts low as multiplicity increases (≈ 0.5 at 80%),
+  the BIC choice much less (≈ 0.9); the planets fitted alone (dashed) drift
+  high, a limitation of a population-averaged completeness (see the methods
+  document). Centre: in the well-measured bins (3–13 M_J, 1–8 yr) the bias
+  stays within ~0–10%. Right: DR4 yield for the whole sky
   within 250 pc versus multiplicity, with the Lammers & Winn prediction for
   comparison.
 
@@ -241,9 +259,8 @@ five figures.
 ### Step 4 — warning flags and radial-velocity follow-up
 
 ```bash
-python scripts/step4.py                      # uses results/step3_gaia/
-python scripts/step4.py --baseline 2         # 2-year RV programme instead of 3
-python scripts/step4.py --root path/to/step3_results --out path/to/output
+python scripts/step4.py --root results/step3_allsky --out results/step4_allsky
+python scripts/step4.py --root results/step3_allsky --out results/step4_allsky --baseline 2   # 2-yr RV programme
 ```
 
 Uses only the step 3 fits. Part 1 tests flags that a DR4 user can see (adopted
@@ -253,7 +270,7 @@ semi-amplitudes, V magnitudes and the number of HARPS or FEROS epochs needed to
 confirm each DR4 planet, reject spurious ones, and find hidden giants (instrument
 assumptions in `src/gaiabias/rv.py`).
 
-**Expected:** `results/step4/summary.txt`, `planets.csv` and two figures.
+**Expected:** `results/step4_allsky/summary.txt`, `planets.csv` and two figures.
 
 - `step4_flags.png` — for each flag: the share of reported planets that are
   not accurate, the share whose star hides another giant, and the share of all
@@ -269,15 +286,18 @@ assumptions in `src/gaiabias/rv.py`).
 
 ![Step 4 RV](docs/figures/step4_rv.png)
 
-### Extended analyses — robustness tests and forecasts (version 0.2.0)
+### Extended analyses — robustness tests, comparisons and forecasts
 
-`scripts/extended/` adds tests of the step 2 and step 3 results and forecasts for follow-up:
-step 2 outcomes as mutually exclusive categories, less favourable noise models, Bayesian
-evidence against the BIC choice, an occurrence rate without an assumed power law, the
-multiplicity signal in the mix of DR4 solutions, an N-body check of every simulated planet
-pair, the warning flags on held-out stars and with brown-dwarf and stellar-binary
-contaminants, a census of known inner-planet hosts with their DR4 sensitivity to outer
-giants, what DR4 measures as full orbits or accelerations, and RV campaigns from La Silla.
+`scripts/extended/` adds tests of the step 2 and step 3 results, comparisons with published
+work and forecasts for follow-up: step 2 outcomes as mutually exclusive categories, less
+favourable noise models, Bayesian evidence against the BIC choice, an occurrence rate without
+an assumed power law, the multiplicity signal in the mix of DR4 solutions, the diagnosis of the
+power-law rate of planets fitted alone, the yield counted with the Lammers & Winn rule, a
+comparison with Greenfield & Owen (2026) for pairs near 2:1, the warning flags on held-out
+stars and with brown-dwarf and stellar-binary contaminants, a census of known inner-planet
+hosts with their DR4 sensitivity to outer giants, what DR4 measures as full orbits or
+accelerations, and RV campaigns from La Silla. Scripts that read step 3 results use the
+whole-sky run by default.
 They need `pip install -r requirements-extended.txt` (rebound, dynesty); see
 [scripts/extended/README.md](scripts/extended/README.md) for what to run and
 [docs/METHODS_AND_RESULTS.md](docs/METHODS_AND_RESULTS.md) for the results.
@@ -305,12 +325,23 @@ Expected plots (in `results/extended/`):
 
 ![Multiplicity signal](docs/figures/ext_multiplicity_signal.png)
 
-- `fig_stability.png` (`fig_stability.py`, after `g2_stability_nbody.py --all` and
-  `g1_stable_scan.py`) — share of unstable pairs against mutual inclination (a) and spacing
-  (b), and the multiplicity bias with all systems and with stable systems only (c). Expect most
-  inclined pairs to be unstable, and the bias in the well-measured region to stay at a few per cent.
+- `pl_drift/pl_drift.png` (`g1_pl_drift.py`) — power-law rate over the whole window, divided
+  by the true rate, against multiplicity, for the planets fitted alone (B) and for predictions
+  from the injections with and without per-S/N response. Expect B to rise at high multiplicity
+  while the S/N-aware prediction follows it, and the truth fitted only in the well-measured cells
+  to stay near 1.05–1.09.
 
-![Stability](docs/figures/ext_stability.png)
+![Power-law drift](docs/figures/ext_pl_drift.png)
+
+- `go_checks/<part>/` (`g2_go_checks.py resoecc | single | second`) — comparison with Greenfield
+  & Owen (2026). `resoecc.png`: eccentricity and mass of a one-orbit fit to circular 2:1 pairs
+  against the mass ratio, with the analytic e_eff = 1.26 m_in/m_out; expect e ≈ 0.25 at a ratio
+  of 5 and ≈ 0.43 at 2.5. `single.png`: detected fraction against S/N (50% near S/N 1).
+  `second.png`: the 50% S/N threshold of the weaker planet per period and mass ratio; expect the
+  highest values at exactly 2:1 with a more massive outer planet.
+
+![Resonance-eccentricity](docs/figures/ext_go_resoecc.png)
+![Second-planet threshold](docs/figures/ext_go_second.png)
 
 - `flags_heldout/flags_heldout.png` (`g1_flags_heldout.py`) — recall, precision and
   false-positive rate of the warning flags on held-out stars (left) and the share of inaccurate
@@ -345,13 +376,27 @@ Expected plots (in `results/extended/`):
 
 ![RV grid](docs/figures/ext_rv_grid.png)
 
-### Optional — check against real DR4 data
+### Real DR4 data
 
-The Gaia DR4 epoch-astrometry pre-release (12 sources) can be used to test the
-noise model, the independence of CCD measurements within a transit, and the
-fitter on real orbits. Download the pre-release XML from
-<https://www.cosmos.esa.int/web/gaia/dr4-prerelease> into `data/dr4_prerelease/`
-and run:
+`scripts/dr4_fit.py` fits real DR4 epoch astrometry: every source is reduced to
+per-transit along-scan positions (the used CCDs of a transit combined) and fitted
+with the seven models; the lowest BIC is adopted and planets are reported with the
+same rule as in the simulations. It reads any file with the DR4 data-model columns
+(the pre-release VOTable now, ECSV/CSV/FITS through astropy), resumes, and splits
+with `--part k/n`:
+
+```bash
+python scripts/dr4_fit.py data/dr4_prerelease/GAIA_DR4_PRERELEASE_EPOCH_ASTROMETRY_RAW.xml -j 8
+```
+
+**Expected:** `results/dr4/fits.csv` and `summary.txt`; for the 12 pre-release
+sources, Gaia-4 adopted as one planet at about 579 d, single stars and quasars as no
+planet.
+
+The pre-release (12 sources) also tests the noise model, the independence of CCD
+measurements within a transit, and the fitter on real orbits. The pre-release XML
+(from <https://www.cosmos.esa.int/web/gaia/dr4-prerelease>) is in
+`data/dr4_prerelease/`:
 
 ```bash
 python scripts/check_dr4_prerelease.py
@@ -371,21 +416,29 @@ of HD 114762, Gaia-4 and Gaia BH3 recovered) and
 - **Run time** grows linearly with the number of fits. `check_setup.py`
   measures the time per fit on your machine. In step 3 the number of fits is
   about 8% of the stars per multiplicity scenario, plus the injections.
-- **Bigger samples.** `--stars 578498` uses every selected star in the default
-  sky area. For a larger `--sky-fraction`, delete
-  `data/gaia_dr3_250pc/stars.npz` and rerun: the circles already downloaded
-  are kept and only the new ones are fetched. The full sky within 250 pc (~2.3 million
-  selected stars) is about eight times the default cost.
-- **Clusters.** Step 3 can be split into independent jobs:
+- **Smaller samples.** `--stars N` fits a random subset of the selected stars;
+  `--sky-fraction 0.25` downloads a random quarter of the tiles. A larger fraction
+  later fetches only the missing tiles.
+- **Measured speed.** One orbit fit takes about 0.5 s on one core. The whole-sky step 3
+  (2.3 million stars, 50,000 injections) took 17 hours on 64 cores of a two-socket
+  AMD EPYC 7552 server; 64 workers ran 59 times faster than one.
+- **Clusters (SLURM).** Step 3 splits into independent parts; templates in
+  [tools/slurm/](tools/slurm/README.md):
 
   ```bash
-  python scripts/step3.py --part 0/20   # on job 0 ... up to --part 19/20 on job 19
-  # copy all results/step3_gaia/fits.part*.csv into one results/step3_gaia/, then
-  python scripts/step3.py --merge-parts
+  python scripts/step3.py --build-only                 # once: stars, planets, job list
+  sbatch --array=0-19 tools/slurm/step3_parts.sbatch   # one part per array task
+  sbatch --dependency=afterok:<job id> tools/slurm/step3_merge.sbatch
   ```
 
-  Each job needs the same code, the same `data/` folder and gaiamock.
-- **Disk.** A default step 3 run writes ~100 MB to `results/step3_gaia/`.
+  Each job needs the same code, the same `data/` folder and gaiamock. Nothing needs MPI.
+- **Shared servers without a queue.** [tools/remote_runs/](tools/remote_runs/README.md)
+  is a template for running jobs from a private GitHub repository through a GitHub
+  Actions runner on the server: push a job file, follow the run on GitHub, get the
+  summaries and figures back as a commit. Jobs run at normal priority by default and on a fixed number
+  of cores.
+- **Disk.** The whole-sky star download is about 150 MB; a whole-sky step 3 run writes
+  about 700 MB to `results/step3_allsky/`.
 
 ---
 
@@ -393,7 +446,7 @@ of HD 114762, Gaia-4 and Gaia BH3 recovered) and
 
 | What | Where |
 |---|---|
-| Occurrence model and multiplicity scenarios | `src/gaiabias/population.py` |
+| Occurrence model, multiplicity scenarios and population variants | `src/gaiabias/population.py` |
 | Noise model and observing pattern | `src/gaiabias/simulate.py`, `src/gaiabias/epochs.py` |
 | Detection rule and orbit fits | `src/gaiabias/fitting.py`, `src/gaiabias/step2/outcomes.py` |
 | Star selection and download | `src/gaiabias/gaia_stars.py` |
@@ -420,11 +473,15 @@ src/gaiabias/
   rates.py             completeness and occurrence-rate estimators
   multiplicity.py      reweighting for the multiplicity scan
   rv.py                radial-velocity amplitudes, precision and epochs
-  dr4_epoch.py         reader for DR4 epoch astrometry files
+  dr4_epoch.py         reader for DR4 epoch astrometry files (VOTable, no astropy)
+  dr4.py               DR4 epoch astrometry -> per-transit data; seven-model fits per source
   step2/               simulation, analyses, sweeps and plots of step 2
   plotstyle.py         shared figure style
-scripts/               one script per step (see Section 2)
-scripts/extended/      robustness tests and forecasts (version 0.2.0; own README)
+scripts/               one script per step (see Section 2); dr4_fit.py for real DR4 data
+scripts/extended/      robustness tests, comparisons and forecasts (own README)
+tools/slurm/           SLURM job arrays for step 3 and the DR4 fits
+tools/remote_runs/     template for running jobs on a shared server through GitHub
+data/dr4_prerelease/   Gaia DR4 pre-release epoch astrometry (12 sources), for tests
 tests/                 unit tests (numpy/scipy only) and gaiamock integration tests
 docs/                  methods and results; example figures
 ```

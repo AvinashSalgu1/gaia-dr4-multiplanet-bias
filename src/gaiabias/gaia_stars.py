@@ -5,17 +5,19 @@ Gaia DR3 sources (gaiadr3.gaia_source) with
 
     parallax > 4 mas (closer than 250 pc)   and   parallax / error > 10
 
-inside a RANDOM SET OF SMALL SKY CIRCLES (radius 3 deg, centres on an even
-Fibonacci grid of 768 points, so circles never overlap), covering a chosen
-fraction of the sky (default 25%). Why not the whole sky: any all-sky query on
-parallax has to visit millions of scattered rows of the 1.8-billion-row table
-and took 15-25+ minutes per piece on both archives. A circle query uses the
-archives' sky-position index and reads only that patch, so each piece takes
-seconds to a minute, and progress is visible right away. The stars of nearby
-space look the same in every direction, so a random sky fraction gives a fair
-sample of stars (all planet rates in step 3 are per star); step 3 only uses a
-random subset of ~300k stars anyway. Circles are fetched in a fixed random
-order, so stopping early still leaves a random sky sample.
+over the WHOLE SKY (default), fetched in 768 pieces. Each piece is one HEALPix
+level-3 tile (53.7 deg^2). Gaia source_ids encode the HEALPix level-12 (nested)
+pixel of the source (source_id // 2^35), so tile p holds exactly the source_ids
+from p * 2^53 to (p + 1) * 2^53: a range on the table's primary key, which the
+archives read without scanning the 1.8-billion-row table (an all-sky query on
+parallax alone took 15-25+ minutes per piece). Tiles are fetched in a fixed
+random order, so a smaller --sky-fraction (or a download stopped early) is still
+a random sky sample.
+
+Layout "circles" (versions up to 0.2.0) instead used a random set of 3-deg sky
+circles on a 768-point Fibonacci grid (at most 52.6% of the sky; default 25%).
+It is kept so that earlier results can be reproduced; its stars are in
+stars.npz, the tiles' in stars_tiles.npz.
 
 The table is served by two archives (TAP services); the code can use either:
   * "vizier" - CDS VizieR, catalogue I/355/gaiadr3 (identical DR3 values;
@@ -52,13 +54,20 @@ import numpy as np
 from .population import _MS_MASS, _MS_MG, StarSample, r_max_lw
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "gaia_dr3_250pc"
-MERGED = DATA_DIR / "stars.npz"
-N_CONES = 768              # Fibonacci grid on the sky; nearest neighbours are >= 6.4 deg apart
+MERGED = DATA_DIR / "stars.npz"              # layout "circles"
+MERGED_TILES = DATA_DIR / "stars_tiles.npz"  # layout "tiles"
+LAYOUT = "tiles"
+SKY_FRACTION = 1.0         # default sky fraction downloaded
+N_TILES = 768              # HEALPix level 3 (nside 8, nested): equal-area tiles of 53.7 deg^2
+TILE_SHIFT = 53            # source_id >> 53 = level-3 nested pixel (35 bits + 2 x 9 levels)
+TILE_SEED = 2026
+N_CONES = 768              # layout "circles": Fibonacci grid; nearest neighbours are >= 6.4 deg apart
 CONE_R_DEG = 3.0           # so 3-deg circles never overlap; each covers 28.3 deg^2 (0.069% of the sky)
-SKY_FRACTION = 0.25        # default sky fraction downloaded (max 768 circles = 52.6%)
+CIRCLES_SKY_FRACTION = 0.25  # default of the circle layout (max 768 circles = 52.6%)
 CONE_SEED = 2017
 POLL_S = 30
-STALL_S = 15 * 60          # give a piece this long on one archive before trying the other
+STALL_S = 15 * 60          # give a circle this long on one archive before trying the other
+TILE_STALL_S = 3 * 60      # tiles normally take 10-40 s; after this the other archive is tried
 DOWNLOAD_JOBS = 6          # circles requested at the same time (archive jobs run in parallel)
 FLAME_TIMEOUT_S = 10 * 60
 D_MAX_PC = 250.0
@@ -89,17 +98,37 @@ WHERE 1 = CONTAINS(POINT('ICRS', "RA_ICRS", "DE_ICRS"), CIRCLE('ICRS', {ra0}, {d
   AND "Gmag" IS NOT NULL
   AND "BP-RP" IS NOT NULL
 """
-VIZIER_QUERY = ("""SELECT "Source" AS source_id, "RA_ICRS" AS ra, "DE_ICRS" AS dec, "Plx" AS parallax,
+VIZIER_SELECT = """SELECT "Source" AS source_id, "RA_ICRS" AS ra, "DE_ICRS" AS dec, "Plx" AS parallax,
        "e_Plx" AS parallax_error, "pmRA" AS pmra, "pmDE" AS pmdec, "Gmag" AS phot_g_mean_mag,
-       "BP-RP" AS bp_rp, "RUWE" AS ruwe""" + VIZIER_WHERE)
+       "BP-RP" AS bp_rp, "RUWE" AS ruwe"""
+VIZIER_QUERY = VIZIER_SELECT + VIZIER_WHERE
+# layout "tiles": a source_id range (one HEALPix level-3 tile) instead of a circle
+ESA_TILE_WHERE = """
+FROM gaiadr3.gaia_source
+WHERE source_id >= {lo} AND source_id < {hi}
+  AND parallax >= {plx_min}
+  AND parallax_over_error > 10
+  AND phot_g_mean_mag IS NOT NULL
+  AND bp_rp IS NOT NULL
+"""
+VIZIER_TILE_WHERE = """
+FROM "I/355/gaiadr3"
+WHERE "Source" >= {lo} AND "Source" < {hi}
+  AND "Plx" >= {plx_min}
+  AND "Plx" > 10 * "e_Plx"
+  AND "Gmag" IS NOT NULL
+  AND "BP-RP" IS NOT NULL
+"""
 MIRRORS = {
     "vizier": dict(label="CDS VizieR (I/355/gaiadr3)",
                    url="https://tapvizier.cds.unistra.fr/TAPVizieR/tap",
                    query=VIZIER_QUERY, where=VIZIER_WHERE,
+                   tile_query=VIZIER_SELECT + VIZIER_TILE_WHERE, tile_where=VIZIER_TILE_WHERE,
                    check='SELECT TOP 1 "Source" FROM "I/355/gaiadr3"'),
     "esa": dict(label="ESA Gaia archive (gaiadr3.gaia_source)",
                 url=None,
                 query=ESA_QUERY, where=ESA_WHERE,
+                tile_query=ESA_QUERY.split("FROM")[0].rstrip() + ESA_TILE_WHERE, tile_where=ESA_TILE_WHERE,
                 check="SELECT TOP 1 source_id FROM gaiadr3.gaia_source"),
 }
 # sizes at which TAP services commonly truncate results: getting exactly one of these is checked
@@ -123,6 +152,28 @@ def cone_order(seed: int = CONE_SEED):
     return np.random.default_rng(seed).permutation(N_CONES)
 
 
+def tile_order(seed: int = TILE_SEED):
+    """Fixed random order of the HEALPix tiles (so any first k of them are a random sky sample)."""
+    return np.random.default_rng(seed).permutation(N_TILES)
+
+
+def tile_source_id_range(p: int):
+    """[lo, hi) of the Gaia source_ids in HEALPix level-3 nested tile p."""
+    return int(p) << TILE_SHIFT, (int(p) + 1) << TILE_SHIFT
+
+
+def n_tiles_for(sky_fraction: float):
+    if not 0 < sky_fraction <= 1:
+        raise SystemExit(f"sky fraction must be in (0, 1], got {sky_fraction}")
+    return int(np.ceil(sky_fraction * N_TILES - 1e-9))
+
+
+def merged_path(layout: str = LAYOUT) -> Path:
+    if layout not in ("tiles", "circles"):
+        raise SystemExit(f"unknown sky layout {layout}; choose tiles or circles")
+    return MERGED_TILES if layout == "tiles" else MERGED
+
+
 def n_cones_for(sky_fraction: float):
     n = int(np.ceil(sky_fraction * 41252.96 / cone_area_deg2()))
     if n > N_CONES:
@@ -139,8 +190,8 @@ WHERE ap.mass_flame IS NOT NULL
 """
 
 
-def _piece_path(k):
-    return DATA_DIR / f"cone_{k:03d}.npz"
+def _piece_path(k, layout="circles"):
+    return DATA_DIR / (f"tile_{k:03d}.npz" if layout == "tiles" else f"cone_{k:03d}.npz")
 
 
 def _gaia(login=True):
@@ -263,18 +314,19 @@ def _check(name):
         return None
 
 
-def _count(tap, name, fmt):
-    q = "SELECT COUNT(*) AS n" + MIRRORS[name]["where"].format(**fmt)
+def _count(tap, name, fmt, wkey="where"):
+    q = "SELECT COUNT(*) AS n" + MIRRORS[name][wkey].format(**fmt)
     tab = tap.launch_job_async(q).get_results()
     return int(tab[tab.colnames[0]][0])
 
 
 def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: float = STALL_S,
-             plx_min: float = 1000.0 / D_MAX_PC, jobs: int = DOWNLOAD_JOBS):
-    """Download the first n circles (in the fixed random order) not yet on disk, then merge.
+             plx_min: float = 1000.0 / D_MAX_PC, jobs: int = DOWNLOAD_JOBS, layout: str = LAYOUT):
+    """Download the first n pieces (tiles or circles, in their fixed random order) not yet on
+    disk, then merge.
 
     source: "auto" (VizieR first, ESA as fallback per piece; whichever answers keeps being
-    used first), "vizier" or "esa" (only that one). jobs: circles requested in parallel."""
+    used first), "vizier" or "esa" (only that one). jobs: pieces requested in parallel."""
     import os
     import threading
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -283,11 +335,16 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
     order = ["vizier", "esa"] if source == "auto" else [source]
     if any(o not in MIRRORS for o in order):
         raise SystemExit(f"unknown source {source}; choose auto, vizier or esa")
-    want = cone_order()[:n_cones_for(sky_fraction)]
-    todo = [k for k in want if not _piece_path(k).exists()]
+    merged_path(layout)
+    tiles = layout == "tiles"
+    want = tile_order()[:n_tiles_for(sky_fraction)] if tiles else cone_order()[:n_cones_for(sky_fraction)]
+    path = lambda k: _piece_path(k, layout)                          # noqa: E731
+    todo = [k for k in want if not path(k).exists()]
     n_have = len(want) - len(todo)
-    rows0 = sum(len(np.load(_piece_path(k))["ra"]) for k in want if _piece_path(k).exists())
-    print(f"  sky sample: {len(want)} circles of {CONE_R_DEG:g} deg = {100 * sky_fraction:.1f}% of the sky; "
+    rows0 = sum(len(np.load(path(k))["ra"]) for k in want if path(k).exists())
+    kind = "HEALPix tiles of 53.7 deg^2" if tiles else f"circles of {CONE_R_DEG:g} deg"
+    frac = len(want) / N_TILES if tiles else len(want) * cone_area_deg2() / 41252.96
+    print(f"  sky sample: {len(want)} {kind} = {100 * frac:.1f}% of the sky; "
           f"{n_have} already on disk ({rows0:,} stars), {len(todo)} to fetch, {jobs} at a time", flush=True)
     if todo:
         print("  checking which archives answer ...", flush=True)
@@ -295,6 +352,8 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
         if not order:
             raise SystemExit("no Gaia archive answers. Check the internet connection, or try later "
                              "(https://www.cosmos.esa.int/web/gaia/news lists ESA archive downtime).")
+        if tiles and stall_s == STALL_S:
+            stall_s = TILE_STALL_S
         timeout = stall_s if len(order) > 1 else 3600
         ra_c, dec_c = cone_centres()
         lock = threading.Lock()
@@ -308,9 +367,17 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
                 local.taps[name] = _service(name, fresh=True)
             return local.taps[name]
 
+        qkey, wkey = ("tile_query", "tile_where") if tiles else ("query", "where")
+
         def fetch(k):
-            fmt = dict(ra0=f"{ra_c[k]:.5f}", dec0=f"{dec_c[k]:.5f}", r=f"{CONE_R_DEG:g}", plx_min=f"{plx_min:.6f}")
-            where = f"circle {k:03d} (RA {ra_c[k]:5.1f}, Dec {dec_c[k]:+5.1f})"
+            if tiles:
+                lo, hi = tile_source_id_range(k)
+                fmt = dict(lo=str(lo), hi=str(hi), plx_min=f"{plx_min:.6f}")
+                where = f"tile {k:03d}"
+            else:
+                fmt = dict(ra0=f"{ra_c[k]:.5f}", dec0=f"{dec_c[k]:.5f}", r=f"{CONE_R_DEG:g}",
+                           plx_min=f"{plx_min:.6f}")
+                where = f"circle {k:03d} (RA {ra_c[k]:5.1f}, Dec {dec_c[k]:+5.1f})"
             with lock:
                 pref = list(st["order"])
             attempts = [(name, timeout) for name in pref] + [(name, 4 * timeout) for name in pref]
@@ -320,13 +387,15 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
                     tp = time.perf_counter()
                     with lock:
                         snap = (st["n_new"], st["rows"])
-                    tab = _run_job(client(name), MIRRORS[name]["query"].format(**fmt), label, st["t_start"],
+                    tab = _run_job(client(name), MIRRORS[name][qkey].format(**fmt), label, st["t_start"],
                                    snap[0], snap[1], len(todo), timeout_s=t_lim)
                     arr = _table_to_arrays(tab)
                     n_rows = len(arr["ra"])
-                    if n_rows in _SUSPICIOUS_ROWS and _count(client(name), name, fmt) != n_rows:
+                    if n_rows in _SUSPICIOUS_ROWS and _count(client(name), name, fmt, wkey) != n_rows:
                         raise RuntimeError(f"exactly {n_rows:,} rows - result cut off by a row limit")
-                    np.savez_compressed(_piece_path(k), source=np.array(name), **arr)
+                    if tiles and n_rows and np.any((arr["source_id"] >> TILE_SHIFT) != k):
+                        raise RuntimeError("answer contains sources outside the tile")
+                    np.savez_compressed(path(k), source=np.array(name), **arr)
                     with lock:
                         st["n_new"] += 1
                         st["rows"] += n_rows
@@ -344,7 +413,7 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
                             st["order"] = st["order"][1:] + [name]
                     nxt = attempts[i + 1][0] if i + 1 < len(attempts) else None
                     print(f"  {label} failed ({type(exc).__name__}: {str(exc)[:200]}); "
-                          + (f"trying {nxt}" if nxt else "giving up on this circle"), flush=True)
+                          + (f"trying {nxt}" if nxt else "giving up on this piece"), flush=True)
                     time.sleep(10)
             return False
 
@@ -356,25 +425,35 @@ def download(sky_fraction: float = SKY_FRACTION, source: str = "auto", stall_s: 
             os._exit(1)
         pool.shutdown()
         if not all(results):
-            raise SystemExit(f"{results.count(False)} circles failed on every archive; rerun later to fetch "
+            raise SystemExit(f"{results.count(False)} pieces failed on every archive; rerun later to fetch "
                              "them (finished ones are kept), or use a smaller --sky-fraction.")
-    merge(want)
+    merge(want, layout)
 
 
-def merge(cones=None):
-    """Join the downloaded circles into one file (the circles in `cones`, default: all on disk)."""
-    if cones is None:
-        cones = [k for k in range(N_CONES) if _piece_path(k).exists()]
-    parts = [dict(np.load(_piece_path(k))) for k in cones]
+def merge(pieces=None, layout: str = "circles"):
+    """Join the downloaded pieces into one file (the pieces in `pieces`, default: all on disk)."""
+    n_all = N_TILES if layout == "tiles" else N_CONES
+    if pieces is None:
+        pieces = [k for k in range(n_all) if _piece_path(k, layout).exists()]
+    parts = [dict(np.load(_piece_path(k, layout))) for k in pieces]
     out = {c: np.concatenate([p[c] for p in parts]) for c in COLS}
-    frac = len(cones) * cone_area_deg2() / 41252.96
-    np.savez_compressed(MERGED, sky_fraction=np.array(frac), n_cones=np.array(len(cones)), **out)
-    print(f"merged {len(out['ra']):,} Gaia DR3 sources from {len(cones)} circles "
-          f"({100 * frac:.1f}% of the sky) -> {MERGED}")
+    frac = len(pieces) / N_TILES if layout == "tiles" else len(pieces) * cone_area_deg2() / 41252.96
+    dest = merged_path(layout)
+    np.savez_compressed(dest, sky_fraction=np.array(frac), n_pieces=np.array(len(pieces)),
+                        layout=np.array(layout), **out)
+    print(f"merged {len(out['ra']):,} Gaia DR3 sources from {len(pieces)} "
+          f"{'tiles' if layout == 'tiles' else 'circles'} ({100 * frac:.1f}% of the sky) -> {dest}")
 
 
-def have_stars() -> bool:
-    return MERGED.exists()
+def have_stars(layout: str = LAYOUT, sky_fraction: float | None = None) -> bool:
+    """True if the merged star file exists (and, if sky_fraction is given, covers that fraction)."""
+    p = merged_path(layout)
+    if not p.exists():
+        return False
+    if sky_fraction is None or layout != "tiles":
+        return True
+    with np.load(p) as f:
+        return int(f["n_pieces"]) == n_tiles_for(sky_fraction)
 
 
 def _flame_cache() -> dict:
@@ -476,13 +555,15 @@ def select(raw: dict, ruwe_max: float | None = 1.4) -> tuple[dict, dict]:
     return sel, counts
 
 
-def load_sample(n: int | None, seed: int, ruwe_max: float | None = 1.4, flame: bool = True):
-    """A random subset of n selected stars as a StarSample, plus selection info.
-    FLAME masses are fetched (and cached) for the chosen stars only."""
-    raw = dict(np.load(MERGED))
+def load_sample(n: int | None, seed: int, ruwe_max: float | None = 1.4, flame: bool = True,
+                layout: str = LAYOUT):
+    """A random subset of n selected stars (all if n is None or <= 0) as a StarSample, plus
+    selection info. FLAME masses are fetched (and cached) for the chosen stars only."""
+    raw = dict(np.load(merged_path(layout)))
+    raw = {k: v for k, v in raw.items() if k not in ("layout", "n_pieces", "n_cones")}
     sel, counts = select(raw, ruwe_max)
     idx = np.arange(len(sel["ra"]))
-    if n is not None and n < len(idx):
+    if n is not None and 0 < n < len(idx):
         idx = np.sort(np.random.default_rng([seed, 77]).choice(idx, n, replace=False))
     if flame and "mass_flame" not in raw:
         fm = fetch_flame(sel["source_id"][idx])

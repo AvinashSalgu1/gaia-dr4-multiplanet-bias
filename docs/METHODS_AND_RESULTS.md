@@ -27,88 +27,13 @@ L&W is the reference forecast of the DR4 planet yield (7,500 ± 2,100 planets). 
 - **Q1.** Yes. For a planet that Gaia detects 80% of the time on its own, an unmodelled companion lowers detection to 69% when fitted with one orbit (step 2). Companions with periods similar to the DR4 time span (3.8 to 11 yr) are the most harmful: the planet is then found correctly only 24% of the time.
 - **Q2.** Yes. 19% of the planets reported by a one-orbit fit are wrong (neither planet's true orbit). 99% of these pass Gaia's DR3 goodness-of-fit cut (F2 < 25). DR4's own label for weak orbits (OrbitalPoorlyConstrained, significance < 5) would flag only 55 to 60% of them; the rest would be published as normal orbits.
 - **Q3.** Largely. Choosing among DR4's models by the Bayesian information criterion raises correct recovery of the planet from 52% to 69% of systems with a companion. The two-companion model helps most for companions with periods under about 11 years; acceleration and jerk models help most for slower companions with a larger wobble. False alarms stay near 1%.
-- **Q4.** It depends on how often giant-planet hosts have a second giant (f). With the same true occurrence rate at every f: in the part of parameter space Gaia measures well (3 to 13 M_J, 1 to 8 yr), the bias is small (0 to −8%). For the occurrence rate over the whole giant-planet range (0.3 to 13 M_J, 0.1 to 8 yr), obtained by fitting a power law, a one-orbit analysis underestimates the rate by 2% at f = 10%, by 28% at f = 60% (close to the multiplicity measured by Bryan et al. 2016) and by 42% at f = 80%. Using DR4's model choice reduces these to +1%, −8% and −13%. At a fixed true occurrence rate, higher multiplicity lowers the DR4 yield: from about 12,700 to 9,600 reported planets (one-orbit fits) or 10,300 to 8,100 (model choice) between f = 10% and 60%, for stars within 250 pc with RUWE ≤ 1.4, scaled to the whole sky.
-- **Q5.** Almost never. Planets alone push RUWE above 1.4 for only 0.5% of stars with one giant and 0.9% of stars with several. The 14% of nearby stars with RUWE > 1.4 are therefore overwhelmingly stellar or brown-dwarf binaries, and the RUWE cut removes fewer than 1% of planet hosts.
-- **Q6.** Four flags visible in DR4 (an adopted model other than a plain orbit, significance below 5, period above 0.7 of the time span, eccentricity above 0.5) together mark 55 to 62% of DR4-like planets as suspect and catch 73 to 79% of the inaccurate planets and 97 to 98% of the spurious ones; a planet without any flag is inaccurate in only about 22% of cases (against 47 to 49% with a flag). Radial velocities confirm almost every Gaia orbit cheaply (95% with 10 HARPS epochs or fewer), but most DR4 hosts are faint (median V ≈ 13.5): for suspect planets on stars with V ≤ 12 (about 1,400 to 1,900 over the whole sky), a hidden giant is found with 20 HARPS epochs or fewer over 3 years in 69 to 89% of cases.
-
-## Papers and data used
-
-- **L&W 2026** (above): detection rule, eccentricity distribution, occurrence model, star selection, noise level, and the yields we compare with.
-- **K. El-Badry et al. 2024, Gaiamock** (github.com/kareemelbadry/gaiamock): Gaia scanning law, measurement times and noise model. L&W used it for all their simulations (L&W Section 3), and so do we.
-- **B. Holl et al. 2023a** (arXiv:2206.05439): per-CCD noise curve used by Gaiamock.
-- **J.-L. Halbwachs et al. 2023**: Gaia DR3 astrometric binary pipeline; Thiele-Innes conversions and the F2 statistic.
-- **Gaia DR4 draft data model** (pre-release, June 2026): DR4 table contents and orbit solution types.
-- **Gaia DR4 pre-release epoch astrometry** (12 sources, June 2026): used to check our noise model and fitter on real data.
-- **Gaia DR3 source catalogue** (via the ESA Gaia archive and CDS VizieR, catalogue I/355/gaiadr3): the real stars of step 3.
-- **D. M. Kipping 2013**: eccentricity distribution Beta(0.867, 3.03) (as L&W Section 4.2).
-- **B. Gladman 1993**: two-planet stability rule (as L&W Section 6.2).
-- **B. J. Fulton et al. 2021 / California Legacy Survey (CLS)**: giant-planet occurrence, through L&W's Eq. 23.
-- **M. L. Bryan et al. 2016**: fraction of giant-planet hosts with an outer giant companion.
-
-## How the simulated Gaia data are made
-
-### Conventions
-
-All conventions are the same as Gaiamock's, so that our simulated data can be fitted with Gaiamock's code and vice versa. Times are years from the DR4 reference epoch (J2017.5, JD 2457936.875); periods and times of periastron are in days; positions in milliarcseconds (mas); planet masses in Jupiter masses (M_J), star masses in solar masses.
-
-### Observations
-
-- Times, scan angles and parallax factors of each observation come from Gaiamock's scanning law for the star's sky position. DR4 covers JD 2456891.5 to 2458868.5 (5.41 years, called T below). A "transit" is one passage of the star through Gaia's field of view.
-- As in Gaiamock and L&W, 10% of transits are removed at random. Typical number of transits per star: median 79 (range about 40 to 200).
-
-### The star's motion
-
-- Without planets the along-scan position is Λ = α_off sin ψ + δ_off cos ψ + μ_α* t sin ψ + μ_δ t cos ψ + ϖ f_ϖ (position offsets, proper motions, parallax and the along-scan parallax factor).
-- Each planet adds a Keplerian reflex orbit of angular size a0 = a × m/(M_central + m) × ϖ, where a follows from Kepler's third law. Several planets are added together, with nested (Jacobi) masses; planet-planet interactions are ignored, which is a good approximation over 5.4 years except near resonances.
-- The orbit is projected on the sky with Thiele-Innes constants (A, B, F, G), in Gaiamock's convention.
-
-### Noise
-
-- Per-CCD uncertainty as a function of G magnitude from the Gaiamock table (Holl et al. 2023a, Fig. 3). Per-transit uncertainty σ_fov = σ_CCD/√8, assuming independent CCD errors within a transit (L&W footnote 5). For bright stars this is about 0.045 to 0.053 mas.
-- For G < 13 an extra random noise of size U(0, 0.04) mas is added and not reported to the fitter, as in Gaiamock.
-- **Checked on real DR4 data** (see "DR4 pre-release check"): the formal per-CCD errors agree with the table to 5 to 10% at G = 14 to 20, and the CCD errors within a transit are uncorrelated (correlation −0.001 ± 0.007), so σ_fov = σ_CCD/√8 holds.
-
-## How the data are fitted
-
-### Models
-
-All models are fitted to the along-scan data. For fixed period P, eccentricity e and phase, the remaining parameters enter linearly and are solved exactly by least squares (the method of the Gaia DR3 pipeline and of L&W); the nonlinear search is over P, e and phase only.
-
-- **No planet (5 parameters):** positions, proper motions, parallax.
-- **One planet (12):** adds P, e, phase and the four Thiele-Innes constants. DR4 name: Orbital.
-- **One planet + acceleration (14):** adds two terms quadratic in time (a slowly curving path from a companion much slower than the data span). DR4: OrbitalAlternativeAcceleration.
-- **One planet + jerk (16):** adds two further cubic terms. DR4: OrbitalAlternativeJerk.
-- **Two planets (19):** two orbits fitted together. The second orbit is found by searching what is left after fitting the first (a periodogram of the residuals), followed by a joint fit. DR4: OrbitalAlternativeMultiple.
-- **Acceleration only (7) and jerk only (9):** no orbit, only the curved path.
-
-### Search method
-
-- One planet: Gaiamock's optimiser (periodogram multistart), P from 10 to 10,000 days, e from 0 to 0.99.
-- Models with acceleration, jerk or two planets: our own numpy optimiser (circular-orbit periodogram over all trial periods, followed by Nelder-Mead from the best minima). On the same one-planet problem it reaches Gaiamock's χ² or a lower value in 96% of systems, and the detection decisions agree in 96%.
-- Uncertainties: Jacobian at the best fit, inflated by Gaiamock's goodness-of-fit factor, as in Gaiamock.
-
-### Detection rule (L&W Sections 4.2, 4.3)
-
-- Δχ² > 50 between the planet model and the matching no-planet model (for the acceleration and jerk models, the comparison is the acceleration-only or jerk-only model, so a star that only accelerates is never counted as a planet).
-- Fitted mass below 13 M_J.
-- Period constrained: (P + σ_P)/(P − σ_P) < 1.5, our linearised version of L&W's P84/P16 < 1.5, checked against Gaiamock's MCMC (see Step 1 results).
-- **Two planets "if justified":** the second planet is reported only if removing it raises χ² by more than 50 and it also passes the mass and period rules.
-
-### Choosing between models: BIC
-
-- BIC = χ² + k ln N, where k is the number of parameters and N the number of transits. A more complex model must lower χ² by more than ln N ≈ 4.4 per extra parameter.
-- The "best model by BIC" analysis computes the BIC of all seven models (no planet, acceleration only, jerk only, one planet, + acceleration, + jerk, two planets) and adopts the lowest, then applies the detection rule.
-- **This is our assumption of how DR4 chooses.** The DR4 data model lists one adopted solution type per source in each orbit table and does not give the selection rules, which will be in the DR4 documentation.
-
-### Quality indicators
-
-- **F2:** the DR3 goodness-of-fit statistic of an orbit (DR3 rejected F2 > 25). It is computed on per-CCD data, so a model error is diluted about 8 times relative to transit-level data.
-- **Significance:** a0/σ_a0. DR4 labels an orbit with significance below 5 as OrbitalPoorlyConstrained.
-- **RUWE** (renormalised unit weight error): computed from the χ² of the 5-parameter fit, converted to per-CCD data as for F2: RUWE = √((7N + χ²)/(8N − 5)). A single star has RUWE ≈ 1.
+- **Q4.** It depends on how often giant-planet hosts have a second giant (f). With the same true occurrence rate at every f, over the whole sky within 250 pc: in the part of parameter space Gaia measures well (3 to 13 M_J, 1 to 8 yr), the bias is small (0 to −10% relative to the same planets fitted alone, and within 7% of the truth). For the occurrence rate over the whole giant-planet range (0.3 to 13 M_J, 0.1 to 8 yr), obtained by fitting a power law, a one-orbit analysis underestimates the rate by 4% at f = 10%, by 32% at f = 60% (close to the multiplicity measured by Bryan et al. 2016) and by 47% at f = 80%. Using DR4's model choice reduces these to 1%, 9% and 12%. The full-range numbers depend on the assumed shape and on a population-averaged completeness, so the well-measured rate is the primary result. At a fixed true occurrence rate, higher multiplicity lowers the DR4 yield: from about 12,300 to 9,400 reported planets (one-orbit fits) or 10,100 to 8,100 (model choice) between f = 10% and 60%, for stars within 250 pc with RUWE ≤ 1.4. Populations with nearly coplanar, dynamically stable systems or with low eccentricities give the same well-measured result.
+- **Q5.** Almost never. Planets alone push RUWE above 1.4 for only 0.5% of stars with one giant and 0.8 to 0.9% of stars with several. The 14% of nearby stars with RUWE > 1.4 are therefore overwhelmingly stellar or brown-dwarf binaries, and the RUWE cut removes fewer than 1% of planet hosts.
+- **Q6.** Four flags visible in DR4 (an adopted model other than a plain orbit, significance below 5, period above 0.7 of the time span, eccentricity above 0.5) together mark 55 to 62% of DR4-like planets as suspect and catch 76 to 78% of the inaccurate planets and 97% of the spurious ones; a planet without any flag is inaccurate in 20 to 22% of cases (against 48 to 50% with a flag). Radial velocities confirm almost every Gaia orbit cheaply (94 to 95% with 10 HARPS epochs or fewer), but most DR4 hosts are faint (median V ≈ 13.5): for suspect planets on stars with V ≤ 12 (about 1,400 to 1,800 over the whole sky), a hidden giant is found with 20 HARPS epochs or fewer over 3 years in 69 to 87% of cases.
 
 ## Tests
 
-The code has 45 automated tests. Highlights:
+The code has 60 automated tests. Highlights:
 
 - Kepler solver, Kepler's law (Jupiter and the Sun), mass inversion, Thiele-Innes conversions, superposition of two planets, stability rule (reproduces L&W's Section 6.2 example).
 - A noise-free planet is fitted exactly (χ² below 1e-12); with noise only, χ² averages N − 5.
@@ -118,7 +43,8 @@ The code has 45 automated tests. Highlights:
 - Rate estimators: recovery of a known power law; and a toy survey with noisy fitted masses and periods, which shows that counting detections at fitted values with a completeness measured at true values is biased by more than 15% in some bins, while the corrected estimators recover the truth (within 3% in total).
 - Multiplicity reweighting reproduces the requested fraction of multi-giant hosts.
 - Gaiamock-based tests (run only where Gaiamock is installed): our simulated wobble equals Gaiamock's to 1e-9 mas; our χ² and F2 equal Gaiamock's to 1e-12; our optimiser and σ_P match Gaiamock's; RUWE and σ_a0 agree with Gaiamock's.
-- Real-data tests on the DR4 pre-release: file reader, single-star parallax, independence of CCDs within a transit, and recovery of three published orbits.
+- Real-data tests on the DR4 pre-release: file reader, single-star parallax, independence of CCDs within a transit, and recovery of three published orbits; the per-transit DR4 input pipeline reproduces the per-CCD fits.
+- Population variants (coplanar, low eccentricity) and the N-body stability screen (a stable pair passes, a crossing pair fails).
 
 ## Step 1: single planets, compared with L&W
 
@@ -193,75 +119,82 @@ For three example systems (no planet; a 3 M_J planet at 1.5 yr; the same plus a 
 
 ### Stars
 
-- Gaia DR3 sources with parallax > 4 mas (closer than 250 pc) and parallax/error > 10, in 365 randomly placed, non-overlapping circles of 3° radius covering 25.0% of the sky (centres on an even 768-point grid on the sphere, taken in a fixed random order). Nearby stars are distributed the same way in all directions, so a random fraction of the sky is a fair sample; all rates are per star. 921,126 sources.
-- Selection (L&W Section 4.1): main sequence, 0.4 < M_G − 2.9 (BP − RP) < 4.5 (L&W Eq. 38): 811,021; closer than L&W's distance limit r_max(M_G) (Eqs. 36, 37) and 250 pc: 756,604; M_G ≤ 12 (mass relation valid, M > 0.2 M_sun): 675,548; RUWE ≤ 1.4: 578,498 (97,050, 14%, removed).
-- 300,000 of these, chosen at random, are used. Star masses from M_G with the main-sequence mass-magnitude relation (as L&W).
+- Every Gaia DR3 source over the whole sky with parallax > 4 mas (closer than 250 pc) and parallax/error > 10: 3,691,994 sources. They are downloaded in 768 pieces, one per HEALPix level-3 tile (53.7 deg²). Gaia source_ids encode the HEALPix level-12 pixel of the source, so each tile is a range of source_ids, which the archives read without scanning the whole table.
+- Selection (L&W Section 4.1): main sequence, 0.4 < M_G − 2.9 (BP − RP) < 4.5 (L&W Eq. 38): 3,239,757; closer than L&W's distance limit r_max(M_G) (Eqs. 36, 37) and 250 pc: 3,023,444; M_G ≤ 12 (mass relation valid, M > 0.2 M_sun): 2,699,125; RUWE ≤ 1.4: 2,311,408 (387,717, 14%, removed).
+- All 2,311,408 selected stars are used. Star masses from Gaia FLAME where available (23%), otherwise from M_G with the main-sequence mass-magnitude relation (as L&W).
+- Whole-sky numbers (yields, numbers of planets) are counted directly, not scaled from a sky fraction.
 
 ### Planets
 
 - Occurrence model: L&W Eq. 23 (CLS-normalised Fulton et al. 2021 shape), 0.3 to 13 M_J and 0.1 to 30 au, scaled with stellar mass; Kipping eccentricities; random, independent orientations. On these stars this gives 0.20 giants per star over the full range and 0.102 per star in the window 0.3 to 13 M_J, 0.1 to 8 yr.
 - **Two multiplicity scenarios with the same mean number of giants per star:**
-- Independent: each star gets a random (Poisson) number of giants, independently. 12% of giant hosts have two or more giants.
-- Clustered: only a fraction of stars can host giants, and those host more. Calibrated so that a giant host has an outer giant companion (1 to 13 M_J, 5 to 20 au) with the probability measured by Bryan et al. (2016), scaled to our mass range. 59% of giant hosts then have two or more giants.
-- Every multi-planet system must be Hill stable; an unstable planet is redrawn and, if that fails, dropped.
+- Independent: each star gets a random (Poisson) number of giants, independently. 412,430 stars host a giant; 12% of them have two or more.
+- Clustered: only a fraction of stars can host giants, and those host more. Calibrated so that a giant host has an outer giant companion (1 to 13 M_J, 5 to 20 au) with the probability measured by Bryan et al. (2016), scaled to our mass range. 214,269 stars host a giant; 59% of them have two or more.
+- Every multi-planet system must be Hill stable; an unstable planet is redrawn and, if that fails, dropped. Two variants of the population (systems made dynamically stable and nearly coplanar from the start; low eccentricities in multi-planet systems) test these assumptions ("Population variants" below).
 
 ### Design
 
 - **A:** every star with all its planets (what Gaia sees).
 - **B:** each planet alone on its star, with the same observations and noise (the reference with no multiplicity). A − B isolates the effect of planets sharing a star.
-- **I:** 15,000 single injected planets (log-uniform in mass and in period from 0.05 to 16 yr, hosts chosen in proportion to stellar mass), used to measure the completeness as a DR4 user would.
+- **I:** 50,000 single injected planets (log-uniform in mass and in period from 0.05 to 16 yr, hosts chosen in proportion to stellar mass), used to measure the completeness as a DR4 user would.
 - **V:** 400 systems per scenario just below the pre-fit cut (summed SNR1 0.5 to 0.8), to confirm that systems below the cut are not detectable: 0 of 400 were.
 - **N:** 1,500 stars without planets, for the RUWE of single stars.
-- Each A, B, V and I system is fitted with all four DR4 orbit models, and the best model by BIC is derived from those fits. The DR4 RUWE (and a DR3 RUWE, from DR3 observation times) is computed for every star.
+- Each A, B, V and I system is fitted with all four DR4 orbit models, and the best model by BIC is derived from those fits: 190,896 (independent) and 138,986 (clustered) stars are fitted. The DR4 RUWE (and a DR3 RUWE, from DR3 observation times) is computed for every star. The whole run takes about 1,100 core-hours.
 
 ### How occurrence rates are inferred
 
 - Bins: mass 0.3, 1, 3, 13 M_J; period 0.1, 0.3, 1, 2, 4, 8 yr. Rate in a bin = detections ÷ (number of stars × completeness).
-- **Bin migration.** Near the detection limit the fitted mass and period scatter away from the true values, and detected planets are mostly those whose signal fluctuated up (Eddington bias), so planets migrate between bins. The completeness is therefore measured with the injected planets counted at their fitted parameters (detected in fitted bin ÷ injected in true bin). Only bins with completeness ≥ 5% are used (3 to 13 M_J at 1 to 2, 2 to 4 and 4 to 8 yr).
+- **Bin migration.** Near the detection limit the fitted mass and period scatter away from the true values, and detected planets are mostly those whose signal fluctuated up (Eddington bias), so planets migrate between bins. The completeness is therefore measured with the injected planets counted at their fitted parameters (detected in fitted bin ÷ injected in true bin). Only bins with completeness ≥ 5% are used (3 to 13 M_J at 1 to 2, 2 to 4 and 4 to 8 yr): the **well-measured region**.
 - **Power law** over the whole window (0.3 to 13 M_J, 0.1 to 8 yr), Γ = C m^α P^β per ln m per ln P, fitted by forward modelling: the expected detections in each fitted cell are predicted through the injection response matrix (true cell → fitted cell, with true cells extending from 0.05 to 16 yr), and compared with the detections by a Poisson likelihood. The rate is Γ integrated over the window.
-- **Closure test:** with each planet alone (B), these methods recover the true rate: power law within 1 to 3% (one planet) and within 3 to 8% (best by BIC), well-measured bins within about 3%.
+- **Closure test:** with each planet alone (B) in the independent scenario, the power law recovers the true rate to within 1% (one planet and best by BIC), and the well-measured bins to within 1 to 4%.
 - Reported planets are also classified as **correct** (period within 10%, mass within 20% of a real planet), **imprecise** (a real planet measured loosely: period within a factor 1.5, mass within a factor 2) or **spurious** (no real planet resembles it).
 
 ### Results: the two scenarios
 
-- **Independent multiplicity:** no measurable effect. Well-measured bins, one-planet fit: A +0.9%, B +2.9% relative to the truth (A vs B −1.9%). Power law: A 0.0997, B 0.1013, truth 0.1021 planets per star.
-- **Clustered multiplicity:** well-measured bins, one planet: A −10.4%, B −2.3% (A vs B −8.4%); best by BIC: A −9.0%, B −1.8% (A vs B −7.3%). Power law, one planet: A 0.069 against a truth of 0.096 (−29%), B 0.099 (+3%); best by BIC: A 0.083 (−14%), B 0.104 (+8%).
+- **Independent multiplicity:** well-measured bins, one-planet fit: A +2.9%, B +4.4% relative to the truth (A vs B −1.5%); best by BIC: A +0.1%, B +1.0% (A vs B −0.8%). Power law, one planet: A 0.0952, B 0.1015, truth 0.1019 planets per star (A −6.6%); best by BIC: A 0.0996 (−2.3%), B 0.1012.
+- **Clustered multiplicity:** well-measured bins, one planet: A −7.5%, B +0.7% (A vs B −8.1%); best by BIC: A −7.5%, B −3.0% (A vs B −4.6%). Power law, one planet: A 0.066 against a truth of 0.096 (−31%); best by BIC: A 0.085 (−11%).
 - The deficit is concentrated at short periods and lower masses (for example 3 to 13 M_J at 0.3 to 1 yr), where the completeness is low: the companion of an inner giant is usually an outer giant with a larger wobble, which spoils the fit of the inner one. The power law, which relies on these detections for its shape, carries the deficit over to the whole giant-planet range.
-- **Accuracy of reported planets** (one planet, independent): correct 53%, imprecise 33%, spurious 14%; best by BIC: 63%, 33%, 4%. The split is the same in A and B, so most inaccurate planets come from being near the detection threshold, not from multiplicity. With clustered multiplicity, A finds 9 to 11% fewer real planets than B.
+- **Accuracy of reported planets** (independent): one planet correct 54%, imprecise 32%, spurious 14%; best by BIC 63%, 32%, 5%. The split is the same in A and B, so most inaccurate planets come from being near the detection threshold, not from multiplicity. With clustered multiplicity, A finds 11% (one planet) and 6% (BIC) fewer real planets than B.
 
 ### Results: multiplicity scan (Q4)
 
-- **Method (no new fits).** Each star's result depends only on its own planets, so a population with any fraction f of giant hosts having two or more giants can be assembled by reweighting the fitted host stars of both scenarios. The number of giants per host follows a zero-truncated Poisson distribution whose parameter sets f. The weights are applied separately in four bins of stellar mass, and the fraction of stars hosting giants is set so that the number of giants per star in the window (0.3 to 13 M_J, 0.1 to 8 yr) equals the CLS-calibrated value (0.102 per star) in every stellar-mass bin. Every f therefore has the same true occurrence rate. Uncertainties are bootstrap 16 to 84% ranges of this simulation (resampling hosts and injections), not DR4 statistics. At f ≥ 0.5 a small tail of very crowded systems (1 to 14%) is not represented in the simulated hosts; the scan reports the f actually reached.
-- **Occurrence rate over the whole window** (power law), inferred ÷ true, at f = 0 / 10 / 30 / 60 / 79%:
-- One planet: 1.01 / 0.98 / 0.89 / 0.72 / 0.58 (B, planets alone: 1.01 to 1.03).
-- Best by BIC: 1.03 / 1.01 / 0.97 / 0.92 / 0.87 (B: 1.03 to 1.11).
-- **Well-measured bins** (3 to 13 M_J, 1 to 8 yr): one planet 1.08 / 1.05 / 1.01 / 0.98 / 0.97 (B 1.08 to 1.04); best by BIC 1.02 / 1.00 / 0.98 / 0.97 / 0.98 (B 1.02 to 1.09). The effect of multiplicity here is 0 to −8%.
-- **Yield** (planets reported, stars within 250 pc with RUWE ≤ 1.4, scaled to the whole sky: 578,498 selected stars ÷ 0.25 = 2.31 million stars), at f = 0 / 10 / 30 / 60 / 79%:
-- One planet: 13,300 / 12,700 / 11,400 / 9,600 / 8,200; of which real planets (correct + imprecise) 11,400 / 10,900 / 9,900 / 8,300 / 7,100.
-- Best by BIC: 10,700 / 10,300 / 9,400 / 8,100 / 7,200; real planets 10,300 / 9,900 / 9,100 / 7,800 / 6,800.
+- **Method (no new fits).** Each star's result depends only on its own planets, so a population with any fraction f of giant hosts having two or more giants can be assembled by reweighting the fitted host stars of both scenarios. The number of giants per host follows a zero-truncated Poisson distribution whose parameter sets f. The weights are applied separately in four bins of stellar mass, and the fraction of stars hosting giants is set so that the number of giants per star in the window (0.3 to 13 M_J, 0.1 to 8 yr) equals the CLS-calibrated value (0.102 per star) in every stellar-mass bin. Every f therefore has the same true occurrence rate. Uncertainties are bootstrap 16 to 84% ranges of this simulation (resampling hosts and injections), not DR4 statistics. At f ≥ 0.6 a small tail of very crowded systems (1 to 6%) is not represented in the simulated hosts.
+- **Well-measured bins** (3 to 13 M_J, 1 to 8 yr), inferred ÷ true at f = 0 / 10 / 30 / 60 / 80%: one planet 1.07 / 1.06 / 1.03 / 0.99 / 0.93; best by BIC 1.04 / 1.03 / 1.01 / 0.98 / 0.93. Relative to the same planets fitted alone (B): one planet 1.00 / 0.99 / 0.97 / 0.93 / 0.90; best by BIC 1.00 / 0.99 / 0.98 / 0.96 / 0.95. The effect of multiplicity here is 0 to −10%.
+- **Occurrence rate over the whole window** (power law), inferred ÷ true: one planet 1.01 / 0.96 / 0.85 / 0.68 / 0.53; best by BIC 1.01 / 0.99 / 0.96 / 0.91 / 0.88.
+- **Planets alone (B), power law:** 1.01 at f = 0, rising to 1.19 (one planet) and 1.20 (BIC) at f = 60% and 1.61 and 1.70 at f = 80%, while the binned B rate stays at 0.99 to 1.07. The cause is the completeness, not the population shape ("Why the power law of planets alone drifts" below), so the full-range numbers are model-dependent and the well-measured rate is the primary result.
+- **Yield** (planets reported, stars within 250 pc with RUWE ≤ 1.4, whole sky), at f = 0 / 10 / 30 / 60 / 80%:
+- One planet: 12,900 / 12,300 / 11,200 / 9,400 / 7,700; of which real planets (correct + imprecise) 11,100 / 10,600 / 9,600 / 8,100 / 6,600.
+- Best by BIC: 10,500 / 10,100 / 9,400 / 8,100 / 6,900; real planets 10,100 / 9,700 / 9,000 / 7,700 / 6,600.
 - At a fixed true occurrence rate, more multiplicity means fewer detections: the same planets sit on fewer stars, and each one is harder to fit.
 
 ### Comparison with L&W's yield
 
-- L&W predict 7,500 ± 2,100 DR4 planets (all distances). Our numbers differ because the assumptions differ: (1) L&W's yield counts a planet when SNR1 > 1.5 and P < 4 yr (their semi-analytic model), while we count detections from full orbit fits, which include periods of 4 to 8 yr (about 40% of our detections) and imprecise and spurious planets; (2) we use real Gaia stars within 250 pc, while L&W use a Galaxy model built from the luminosity function of stars within 100 pc; (3) we use Gaiamock's noise table, while L&W's yield uses the simplified σ_fov = 54 μas × max[1, 10^(0.2(G − 14))].
-- Applying L&W's counting rule (SNR1 > 1.5, P < 4 yr) to our stars and planets gives about 11,100 (independent) and 7,900 (clustered) for the whole sky within 250 pc.
-- Using in addition L&W's simplified noise level (54 µas per transit for G < 14) instead of the Gaiamock table (median about 46 µas per transit at G = 8–14 for our stars) lowers these to about 9,600 (independent) and 6,700 (clustered).
-- Breakdown (independent scenario): full fits about 12,700 → L&W counting rule about 11,100 → L&W noise level about 9,600 → L&W 7,500 ± 2,100. The remaining difference (about 28%, within L&W's quoted uncertainty) comes from the stellar sample: real Gaia DR3 stars here, a Galaxy model built from the luminosity function within 100 pc in L&W.
-- The 250 pc limit does not explain the higher yield: it removes stars that L&W include. Detections come from all distances (whole sky, independent, L&W rule): 0–50 pc about 900, 50–100 pc 2,600, 100–150 pc 3,300, 150–200 pc 2,700, 200–250 pc 1,600.
+L&W predict 7,500 ± 2,100 DR4 giant planets with at most one planet per star. Our full-fit yield is higher. Restricting the sample to 250 pc does not explain this, since it removes stars that L&W include; 35% of our detections (L&W rule) come from 150 to 250 pc. Counting the same simulated planets (independent scenario) in steps (scripts/extended/g1_lw_yield.py):
+
+| Step | DR4 planets, whole sky |
+|---|---|
+| Our full orbit fits, one planet (all reported planets, periods up to 8 yr) | 11,872 |
+| Counted with the L&W rule instead (SNR_1 > 1.5 and P < 4 yr) | 10,986 |
+| Also with L&W's noise (54 µas per transit at G < 14, against a median of 46 µas in the gaiamock table) | 9,425 |
+| L&W (2026), Galaxy model of stars | 7,500 ± 2,100 |
+
+- The first step reflects what is counted: full fits also report planets at 4 to 8 yr and some imprecise or spurious solutions. The second is the noise model.
+- The remaining difference (26%) is within L&W's quoted uncertainty. It may come from the stellar sample (real Gaia stars here, a model population in L&W); this has not been tested separately.
+- With clustered multiplicity the same counting gives 7,085.
 
 ### Results: RUWE (Q5)
 
 - Stars without planets: RUWE > 1.4 in 0.00% (1,500 stars).
-- Independent scenario: RUWE > 1.4 for 0.47% of stars with one giant and 0.81% of stars with two or more (DR3 RUWE: 0.15% and 0.24%).
-- Clustered scenario: 0.51% and 0.91%.
+- Independent scenario: RUWE > 1.4 for 0.50% of stars with one giant and 0.77% of stars with two or more (DR3 RUWE: 0.14% and 0.16%).
+- Clustered scenario: 0.51% and 0.90%.
 - RUWE > 1.4 is reached mainly by strong, short-period signals; long-period planets are partly absorbed into the proper motion.
-- Conclusion: removing stars with RUWE > 1.4 removes fewer than 1% of planet hosts, and multi-planet systems are not preferentially removed. Stellar and brown-dwarf companions, which cause most of the observed RUWE > 1.4 cases, are not simulated.
+- Conclusion: removing stars with RUWE > 1.4 removes fewer than 1% of planet hosts, and multi-planet systems are not preferentially removed. Stellar and brown-dwarf companions, which cause most of the observed RUWE > 1.4 cases, are not in the reference population.
 
 ## Step 4: warning signs and radial-velocity follow-up (Q6)
 
 ### Design (scripts/step4.py)
 
-- Uses only the step 3 results (the fits of the real-star sample); no new Gaia fits. It runs in about 10 seconds.
+- Uses only the step 3 results (the fits of the real-star sample); no new Gaia fits. It runs in minutes.
 - Planets analysed: every planet reported for the real systems (A) by the best model by BIC (what DR4 would publish) and, for comparison, by the one-planet fit, in both multiplicity scenarios.
 - **Flags** use only quantities a DR4 user can see: the adopted model (other than a plain orbit), significance below 5 (OrbitalPoorlyConstrained), period above 0.7 T (3.8 yr), eccentricity of the one-planet fit above 0.5, Δχ² below 100 (near threshold), period error above 10%, RUWE above 1.2. A planet is **suspect** if any of the first four flags is set.
 - For each flag: share of planets flagged; share inaccurate (imprecise or spurious), spurious, and with a hidden giant (another giant of 0.3 to 13 M_J at 0.1 to 30 au on the star that was not reported), among flagged and unflagged planets; and the share of all inaccurate, spurious and hidden-giant cases that the flag catches.
@@ -273,32 +206,32 @@ For three example systems (no planet; a 3 M_J planet at 1.5 yr; the same plus a 
 
 ### Results: warning flags
 
-Best model by BIC, independent / clustered multiplicity. Reported planets: 1,302 / 898 in the sample (10,000 / 6,900 over the whole sky); inaccurate 37% / 37%; spurious 4% / 4%; star hides another giant 25% / 79%.
+Best model by BIC, independent / clustered multiplicity. Reported planets over the whole sky: 9,793 / 7,115; inaccurate 37% / 38%; spurious 5% / 4%; star hides another giant 23% / 80%.
 
-- **Significance < 5:** 19% / 17% of planets; inaccurate 76% / 85% of flagged against 28% of unflagged; catches 62% / 73% of spurious planets.
-- **Eccentricity > 0.5:** 25% / 27%; inaccurate 65% / 63% against 27% / 28%; catches 74% / 70% of spurious planets.
-- **Near threshold (Δχ² < 100):** 29% / 28%; inaccurate 59% / 57% against 27% / 30%.
-- **Adopted model not a plain orbit:** 8% / 20%; hardly more often inaccurate (42% / 40% against 36% / 37%) but much more often hiding another giant (61% / 93% against 21% / 75%). For the one-planet analysis the same flag (the BIC preferring another model) catches 81% of spurious planets.
-- **Period > 3.8 yr:** 29%; inaccurate 42% / 44% against 34% / 35%. **Period error > 10%:** 8% / 10%; inaccurate 52% / 60%.
-- **RUWE > 1.2** marks the more accurate planets (inaccurate 19% / 23% against 44%), because a high RUWE means a strong signal. It is not a warning sign.
-- **Suspect (any of the first four):** 55% / 62% of planets; inaccurate 49% / 47% against 22% / 21%; catches 73% / 79% of inaccurate, 98% / 97% of spurious and 72% / 64% of hidden-giant cases.
+- **Significance < 5:** 18% / 18% of planets; inaccurate 76% / 77% of flagged against 28% / 29% of unflagged; catches 66% / 71% of spurious planets.
+- **Eccentricity > 0.5:** 26% / 27%; inaccurate 65% / 62% against 27% / 29%; catches 68% / 71% of spurious planets.
+- **Near threshold (Δχ² < 100):** 29% / 27%; inaccurate 57% / 59% against 28% / 30%.
+- **Adopted model not a plain orbit:** 7% / 21%; hardly more often inaccurate (48% / 38% against 36% / 38%) but much more often hiding another giant (52% / 96% against 21% / 75%). For the one-planet analysis the same flag (the BIC preferring another model) catches 76% of spurious planets.
+- **Period > 3.8 yr:** 29% / 27%; inaccurate 43% / 45% against 34% / 35%. **Period error > 10%:** 9% / 11%; inaccurate 62% / 56%.
+- **RUWE > 1.2** marks the more accurate planets (inaccurate 19% / 21% against 44% / 46%), because a high RUWE means a strong signal. It is not a warning sign.
+- **Suspect (any of the first four):** 55% / 62% of planets; inaccurate 50% / 48% against 20% / 22%; catches 76% / 78% of inaccurate, 97% / 97% of spurious and 66% / 65% of hidden-giant cases.
 
 ### Results: radial-velocity follow-up
 
-- DR4 planet hosts are mostly faint K and M dwarfs: median V = 13.3 (independent) and 13.8 (clustered). Median HARPS precision 12 to 15 m/s per epoch, FEROS 58 to 76 m/s.
-- **Confirming the Gaia orbit** is cheap because Gaia planets are massive: 95% with 10 HARPS epochs or fewer (median 6); 47 to 58% with FEROS. A spurious orbit is rejected with 10 HARPS epochs or fewer in 94 to 95% of cases.
-- **Finding the hidden giant** over a 3-year programme with 10 / 20 / 40 HARPS epochs: 40 / 47 / 52% (independent) and 56 / 60 / 65% (clustered) of stars with a hidden giant; with FEROS 17 / 23 / 27% and 33 / 39 / 44%. The others are too slow or too light to show up in 3 years.
-- **Within practical reach** (suspect planets on stars with V ≤ 12, HARPS): about 1,900 (independent) or 1,400 (clustered) planets over the whole sky, needing about 6,500 or 4,800 hours of HARPS time in total (at most 40 epochs each); among them, a hidden giant is found with 20 epochs or fewer in 69% or 89% of cases. With FEROS (V ≤ 10): about 800 or 540 planets, 4,600 or 2,700 hours. Only the southern part of the sky is observable from La Silla, roughly halving these numbers for one site.
+- DR4 planet hosts are mostly faint K and M dwarfs: median V = 13.4 (independent) and 13.8 (clustered). Median HARPS precision 12 to 14 m/s per epoch, FEROS 60 to 71 m/s.
+- **Confirming the Gaia orbit** is cheap because Gaia planets are massive: 94 to 95% with 10 HARPS epochs or fewer (median 6); 52 to 56% with FEROS. A spurious orbit is rejected with 10 HARPS epochs or fewer in 92 to 95% of cases.
+- **Finding the hidden giant** over a 3-year programme with 10 / 20 / 40 HARPS epochs: 43 / 50 / 55% (independent) and 55 / 60 / 64% (clustered) of stars with a hidden giant; with FEROS 19 / 23 / 29% and 30 / 36 / 42%. The others are too slow or too light to show up in 3 years.
+- **Within practical reach** (suspect planets on stars with V ≤ 12, HARPS): about 1,800 (independent) or 1,400 (clustered) planets over the whole sky, needing about 6,100 or 5,200 hours of HARPS time in total (at most 40 epochs each); among them, a hidden giant is found with 20 epochs or fewer in 69% or 87% of cases. With FEROS (V ≤ 10): about 720 or 540 planets, 4,000 or 3,300 hours. Only the southern part of the sky is observable from La Silla, roughly halving these numbers for one site.
 
 ### Recipe for follow-up
 
 - Distrust first the DR4 planets with significance below 5 or eccentricity above 0.5; these are most often imprecise or spurious, and a few RV epochs decide.
-- Look for hidden giants first around stars where DR4 adopted an acceleration, jerk or two-companion model: in the clustered case 93% of them have another giant.
+- Look for hidden giants first around stars where DR4 adopted an acceleration, jerk or two-companion model: in the clustered case 96% of them have another giant.
 - Restrict precise RV follow-up to V ≤ 12 (HARPS) or V ≤ 10 (FEROS); plan 6 to 10 epochs to confirm the orbit and about 20 epochs over 3 years to look for a companion.
 
-## Extended analyses (version 0.2.0)
+## Extended analyses
 
-Robustness tests and forecasts added in version 0.2.0. The scripts are in scripts/extended/ (see its README); results go to results/extended/.
+Robustness tests, comparisons and forecasts (added in versions 0.2.0 and 0.3.0). The scripts are in scripts/extended/ (see its README); results go to results/extended/. Analyses that use step 3 results use the whole-sky run.
 
 ### Noise model (scripts/extended/g2_noise_robustness.py)
 
@@ -310,10 +243,10 @@ The first 1,000 step 2 systems were refitted under four less favourable noise mo
 
 ### Bayesian evidence versus the BIC (scripts/extended/g2_evidence.py, g2_evidence_truth.py)
 
-For 197 step 2 systems (50 with a weak target, 50 with an eccentric planet, 47 near the 2:1 period ratio, 50 at random) the evidence of the seven models was computed: the linear parameters are integrated analytically with Gaussian priors and the period, phase and eccentricity of each orbit are sampled with nested sampling (dynesty). All ln Z errors are below 1.
+For 1,543 step 2 systems (478 with a weak target, 518 with an eccentric planet, 47 near the 2:1 period ratio, which is all that the 20,000 systems provide once the other groups are filled, and 500 at random) the evidence of the seven models was computed: the linear parameters are integrated analytically with Gaussian priors and the period, phase and eccentricity of each orbit are sampled with nested sampling (dynesty). All ln Z errors are below 1.
 
-- The two choices agree for 55% of systems (74% in the random group); 69% and 51% with priors three times narrower and wider. When the BIC adopts one orbit, the evidence agrees in 79 of 84 cases; when it adopts an orbit with a trend, the evidence prefers two orbits in 54 of 68.
-- Against the true systems both do equally well overall (target correct 55% for the BIC, 52 to 54% for the evidence; a wrong planet in 18 to 19% for both). Where the BIC adopts two orbits and the evidence one, the evidence is better (target correct 56 to 88% against 31 to 38%, wrong planet 0 to 25% against 47 to 50%): the BIC adopts the two-orbit model too easily. The subsets contain 8 to 55 systems.
+- The two choices agree for 57% of systems (61% in the random group); 65% and 52% with orbit and trend priors three times narrower and wider. When the BIC adopts one orbit, the evidence agrees in 654 of 704 cases; when it adopts an orbit with a trend, the evidence prefers two orbits in 412 of 538; when it adopts two orbits, the evidence prefers one in 82 of 281.
+- Against the true systems the BIC does slightly better overall: target correct 62% against 58 to 59% for the evidence, a wrong planet 12% against 15 to 16%. Where the BIC adopts a trend model and the evidence two orbits (350 to 412 systems, depending on the priors), the BIC finds the target more often (65 to 69% against 48 to 52%) and reports a wrong planet less often (10 to 12% against 21 to 24%). In the opposite case (BIC two orbits, evidence one; 53 to 101 systems) the evidence is better (target correct 55 to 64% against 45 to 51%). Neither criterion is better in every case; the boundary between a trend and a second orbit is where the adopted model is least certain.
 
 ![Noise and evidence](figures/ext_noise_evidence.png)
 
@@ -321,29 +254,69 @@ For 197 step 2 systems (50 with a weak target, 50 with an eccentric planet, 47 n
 
 The step 3 inference was repeated with one free rate per mass-period cell and no assumed shape, using the injection response matrix.
 
-- Only cells in which at least 5% of the injected planets are recovered can be measured, all at 3 to 13 M_J. There the rate for the real systems is 0.91 to 1.04 times the truth, and 0.94 to 0.99 times the rate for the same planets fitted alone.
-- Cells holding 62 to 68% of the simulated giants, mostly below 3 M_J, have too little response for any rate to be measured without assuming a shape. The large full-range biases of the power-law fit come from extrapolating into these cells.
+- Only cells in which at least 5% of the injected planets are recovered can be measured, all at 3 to 13 M_J. There the rate for the real systems is 0.93 to 1.07 times the truth, and 0.94 to 0.99 times the rate for the same planets fitted alone (both scenarios, one orbit and BIC).
+- Cells holding 61 to 67% of the simulated giants, mostly below 3 M_J, have too little response for any rate to be measured without assuming a shape. The large full-range biases of the power-law fit come from extrapolating into these cells.
 
 ![Binned rate](figures/ext_rate_binned.png)
 
 ### Multiplicity from the mix of DR4 solutions (scripts/extended/g1_multiplicity_signal.py)
 
-The share of stars with a reported planet whose adopted model is not a plain orbit rises from 5% when no host has a second giant to 25% when 79% do. Because this share is observable, it constrains multiplicity: with 3,000 reported planets to about ±0.02 to 0.03 (statistical only; the dependence on the noise model and the selection rule is not included).
+The share of stars with a reported planet whose adopted model is not a plain orbit (BIC choice) rises from 4.6% when no host has a second giant to 24.6% when 80% do; the share with two orbits alone rises only from 3.4% to 7.3%. Because the first share is observable, it constrains multiplicity: with 3,000 reported planets to about ±0.02 to 0.03 (statistical only; the dependence on the noise model and the selection rule is not included).
 
 ![Multiplicity signal](figures/ext_multiplicity_signal.png)
 
-### Dynamical stability (scripts/extended/g2_stability_nbody.py, g1_stable_scan.py)
+### Population variants (scripts/step3.py --variant)
 
-All 38,191 neighbouring giant pairs of the step 3 population were integrated with rebound (WHFast, MEGNO) for 100,000 inner orbits. Unstable = close encounter within one mutual Hill radius, ejection or MEGNO > 4.
+The reference population draws the orientations of the planets in a system independently and accepts any system whose pairs pass the Hill test, which does not guarantee long-term stability for eccentric or inclined pairs. Two variants change only the systems with two or more giants (src/gaiabias/population.py), and step 3 was repeated over the whole sky with each, with the same stars, injections and analysis:
 
-- 72% of pairs are unstable; 75% (independent) and 87% (clustered) of multi-giant systems contain an unstable pair. Instability depends mainly on mutual inclination: 30 to 40% below 30°, 86 to 89% above 60°. The Hill criterion used in the simulation is not sufficient for inclined pairs.
-- Repeating the multiplicity scan with only the systems whose pairs all survive gives, in the well-measured region, 0.94 to 0.99 (one orbit) and 0.95 to 0.98 (BIC) times the rate of the same planets fitted alone, the same 1 to 6% effect as with all systems within the bootstrap ranges. The full-range power-law fit becomes unreliable for this subsample.
+- **coplanar + stable:** every further planet is tilted from the first by a mutual inclination drawn from a Rayleigh distribution with σ = 2° (the scale measured for Kepler multi-planet systems; Fabrycky et al. 2014), and every multi-planet system is integrated with rebound (WHFast, MEGNO) for 10,000 orbits of its innermost planet when it is drawn. A close encounter within one mutual Hill radius, an ejection or MEGNO > 4 makes it unstable, and the whole system is redrawn (up to six times; a system that stays unstable keeps only its first planet).
+- **lowecc:** the eccentricities of planets in multi-planet systems are drawn from a Rayleigh distribution with σ = 0.1 instead of Kipping (2013), a bounding case for dynamically cold systems.
 
-![Stability](figures/ext_stability.png)
+Coplanar + stable: 37% (independent) and 38% (clustered) of multi-giant systems are unstable when first drawn (with independent orientations the share is 64% in a 100,000-star test); after redrawing, 110 and 423 systems (0.2 to 0.3%) remain unstable and keep their first planet. Compared with the reference population:
+
+| Quantity | Reference | Coplanar + stable | Low eccentricity |
+|---|---|---|---|
+| Well-measured rate, A vs B, clustered, one orbit / BIC | −8.1% / −4.6% | −8.6% / −4.3% | −8.6% / −4.8% |
+| Well-measured rate ÷ true, one orbit, f = 0 → 80% | 1.07 → 0.93 | 1.09 → 0.97 | 1.10 → 0.99 |
+| Power-law rate ÷ true, one orbit, f = 30 / 60 / 80% | 0.85 / 0.68 / 0.53 | 0.92 / 0.75 / 0.65 | 0.89 / 0.70 / 0.58 |
+| Power-law rate ÷ true, BIC, f = 30 / 60 / 80% | 0.96 / 0.91 / 0.88 | 1.03 / 0.97 / 0.94 | 0.98 / 0.91 / 0.87 |
+| Power-law rate of planets alone (B), one orbit, f = 0 / 60 / 80% | 1.01 / 1.19 / 1.61 | 1.09 / 1.13 / 1.03 | 1.08 / 1.15 / 1.16 |
+| Yield, one orbit, f = 0 / 60 / 80% | 12,900 / 9,400 / 7,700 | 13,300 / 9,100 / 7,600 | 13,300 / 10,300 / 8,600 |
+| Yield, BIC, f = 0 / 60 / 80% | 10,500 / 8,100 / 6,900 | 10,700 / 7,800 / 6,600 | 10,700 / 8,800 / 7,600 |
+| Correct / imprecise / spurious, independent, one orbit | 54 / 32 / 14% | 54 / 32 / 14% | 55 / 31 / 14% |
+| Correct / imprecise / spurious, independent, BIC | 63 / 32 / 5% | 64 / 32 / 4% | 65 / 31 / 4% |
+| RUWE > 1.4, hosts with 2+ giants (independent / clustered) | 0.77 / 0.90% | 0.74 / 0.91% | 0.90 / 1.09% |
+| Suspect flags catch (inaccurate / spurious), BIC, independent | 76 / 97% | 74 / 98% | 75 / 98% |
+
+Both variants leave the main results unchanged: the well-measured rate moves by at most a few percent and stays within about 10% of the truth at every multiplicity, the accuracy of reported planets, the RUWE result and the flags are the same, and the yields change by at most 12% (low eccentricity, at high multiplicity). With low eccentricities the power-law deficit at 30 to 80% multiplicity is slightly smaller with one orbit (0.58 instead of 0.53 at 80%) and the same with the BIC choice; the drift of the planets fitted alone is much reduced (1.08 to 1.16). Low-eccentricity companions are slightly easier to detect, so more of the multi-giant hosts are counted (higher yields at high multiplicity) and slightly more of them exceed RUWE = 1.4. Run time: 16.4 h (coplanar + stable) and 14.9 h (low eccentricity) on 64 cores.
+
+### Why the power law of planets alone drifts (scripts/extended/g1_pl_drift.py)
+
+In the reference population the power-law rate of the planets fitted alone (B) rises from 1.01 to 1.61 of the true rate between f = 0 and 80%, while their binned rate stays near 1. B has no multiplicity in its fits, so the drift had to come from the population or from the method. For each f this script compares power-law fits to: the B detections; the detections the injection response predicts for the true planets; the true planets themselves; and the true planets only in the well-measured cells, extrapolated to the whole window.
+
+- The population shape is not the cause: a power law fitted to the true planets in the well-measured cells and extrapolated gives 1.05 to 1.09 at every f, and one fitted to all true planets gives 1.00.
+- Planets beyond the longest injected period (16 yr) make up only 0 to 5% of the B detections and do not change the drift.
+- In the well-measured cells the B detections agree with the prediction from the injections (ratio 1.02 to 1.08 at every f). In the poorly measured cells they exceed it by up to 39% at f = 80%. A prediction that uses a response measured separately in bins of each planet's per-transit signal-to-noise removes most of the excess (BIC: ratio 0.99 to 1.11).
+- The planets of multi-giant hosts therefore have a different signal-to-noise distribution within a cell than the injections (different host stars), and in cells of low completeness a population-averaged completeness is not adequate. This argues for completeness measured star by star, which is how Study 1 will treat the real DR4 data, and for the well-measured rate as the primary result. In the coplanar + stable population the drift disappears (1.03 to 1.14 at all f), although the power law of B stays 5 to 14% high; with low eccentricities it is much reduced (1.08 to 1.16).
+
+![Power-law drift](figures/ext_pl_drift.png)
+
+### Comparison with Greenfield & Owen (2026) (scripts/extended/g2_go_checks.py)
+
+Greenfield & Owen (2026) study single and two-planet detection in Gaia data with Bayesian model selection, with emphasis on pairs near 2:1. Their set-up was reproduced where they state it: a 1 M_sun star at 16 pc, proper motion (5, −24) mas/yr, sky position (45°, 45°), 30 µas per field-of-view transit, circular face-on orbits (random inclinations as a second case for single planets), "decisive" evidence (log10 Bayes factor > 2). Epochs come from gaiamock's scanning law at the same position; planet-planet interactions are ignored.
+
+- **Resonance-eccentricity degeneracy.** Circular, coplanar 2:1 pairs fitted with one orbit give the eccentricity of the analytic mapping e_eff = 2^(1/3) m_in/m_out (Greenfield & Owen Eq. 22; Yahalomi et al. 2026) for outer-to-inner mass ratios of 2.5 and above: e = 0.24 at a ratio of 5 (0.25 predicted) and 0.43 at 2.5 (0.50 predicted; Greenfield & Owen quote about 0.4). At a ratio of 0.8 the fit gives e = 0.82 to 0.96 (about 0.8 in their work). The fitted mass exceeds the outer planet's by 5 to 8% at a ratio of 5, 14 to 18% at 2.5 (about 10% in their work) and 110 to 305% at 0.8 (up to 100%; 110 to 117% with DR5-length data). The BIC prefers two orbits in most systems with mass ratios up to 1 (49 to 100% at 1.5, depending on S/N and data length), but rarely at 2.5 and above, where the eccentric single orbit is accepted.
+- **Single-planet threshold.** The S/N at which 50% of planets are detected: 0.99 (face-on) and 1.23 (random inclinations) with orbit priors of 0.1 mas, 1.18 and 1.54 with 1 mas; Greenfield & Owen find 0.89 and 1.01 with log-uniform priors on the orbit size. The L&W rule (Δχ² > 50 with the mass and period checks) gives 1.07 and 1.36 on the same planets.
+- **Second planet near 2:1.** The S/N of the weaker planet at which it is detected in 50% of systems (log10 Bayes factor of two against one orbit > 2), for period ratios 1.7 to 2.3 and mass ratios 0.2 to 5 (60 systems per configuration): 1.50 near 2:1 (1.95 to 2.05) against 1.14 farther away (1.7 and 2.3) with 0.1-mas priors, and 2.05 against 1.38 with 1-mas priors; the highest thresholds are at exactly 2:1 with the outer planet 2.5 to 5 times more massive (up to 3.5). Greenfield & Owen find 0.5 to 2, higher near 2:1 and when the outer planet is more massive. The BIC needs 1.47 near and 0.96 far, the project's two-orbit rule 1.82 and 1.23. Where the evidence prefers two orbits, the two-orbit fit finds both periods within 10% in 80 to 87% of systems.
+- Conclusion: the trends agree; our evidence thresholds are somewhat higher, most of the difference following the prior on the orbit size.
+
+![Resonance-eccentricity](figures/ext_go_resoecc.png)
+![Single-planet threshold](figures/ext_go_single.png)
+![Second-planet threshold](figures/ext_go_second.png)
 
 ### Warning flags on held-out stars (scripts/extended/g1_flags_heldout.py)
 
-The stars were split at random; thresholds were chosen on one half and scored on the other. The default rule (adopted model not a plain orbit, significance < 5, period > 0.7 T, eccentricity > 0.5) flags 72 to 75% of inaccurate planets, 48% of flagged planets are inaccurate and 47 to 50% of accurate planets are flagged. Tuned thresholds do not generalise better in both scenarios. The number of flags is a usable calibration: inaccurate in 23% of cases with no flag, 29 to 35% with one, 67 to 79% with two or three.
+The stars were split at random; thresholds were chosen on one half and scored on the other. The default rule (significance < 5, period > 0.7 T, eccentricity > 0.5) flags 75 to 78% of inaccurate planets on the held-out half; 48 to 50% of flagged planets are inaccurate and 43 to 52% of accurate planets are flagged. Thresholds tuned on the other half (significance < 8, period > 0.8 T, eccentricity > 0.7) raise the recall to 88 to 89% in both scenarios at the same precision, but flag 63 to 69% of all planets (48 to 57% of accurate ones), so the choice is a trade-off rather than an improvement. The number of flags is a usable calibration: inaccurate in 20 to 22% of cases with no flag, 34 to 36% with one, 61 to 70% with two and 84 to 89% with three.
 
 ![Flags on held-out stars](figures/ext_flags_heldout.png)
 
@@ -351,8 +324,8 @@ The stars were split at random; thresholds were chosen on one half and scored on
 
 Brown dwarfs (13 to 80 M_J, 0.6% of stars) and stellar companions (mass ratio 0.1 to 1, Raghavan et al. 2010; 7.7% of stars at periods of 0.05 to 16 yr) were added to random step 3 stars. The photocentre orbit is the primary's reflex orbit scaled by (q/(1+q) − β)/(q/(1+q)), with β the companion's share of the G-band light from the main-sequence mass-magnitude relation, and is simulated as a dark companion with the same angular orbit. The same DR3 RUWE cut is applied.
 
-- No brown dwarf is reported with a planetary mass. Of 6,000 stellar binaries, 1,011 have a planet-like photocentre orbit (apparent mass below 13 M_J), mostly near-twins; 211 of these are large enough to detect, and 23 are reported as planets after the DR4-like fits and the RUWE cut, with a median apparent mass of 8.8 M_J for companions of about 0.27 M_sun, all as plain orbits.
-- At these rates binaries are 8 to 10% of reported planets. The flags catch 60 to 62% of them; recall falls by about 3 points, precision rises by about 5, and planets with no flag are inaccurate or not planets in 29 to 30% of cases instead of 23%. A DR4 planet sample therefore needs Gaia RVS velocities or one RV spectrum per target. These numbers rest on 23 simulated impostors and a simple binary population.
+- Of 3,000 brown dwarfs, 5 are reported with a planetary mass, all just below the limit (median 12.7 M_J). Of 6,000 stellar binaries, 1,014 have a planet-like photocentre orbit (apparent mass below 13 M_J), mostly near-twins; 201 of these are large enough to detect, and 20 are reported as planets after the DR4-like fits and the RUWE cut, with a median apparent mass of 9.2 M_J for companions with a median true mass of about 0.19 M_sun, all as plain orbits.
+- At these rates contaminants are 7 to 10% of reported planets. The default flags catch 49 to 60% of them; recall falls by about 4 points, precision rises by 3 to 5 points, and planets with no flag are inaccurate or not planets in 26 to 30% of cases instead of 20 to 22%. A DR4 planet sample therefore needs Gaia RVS velocities or one RV spectrum per target. These numbers rest on 25 simulated impostors and a simple binary population.
 
 ![Binaries posing as planets](figures/ext_binaries.png)
 
@@ -386,15 +359,17 @@ For a 1.0 and a 0.5 M_sun star at 25, 50 and 100 pc, companions of 0.19 to 30 M_
 
 ![RV grid](figures/ext_rv_grid.png)
 
-## Scaling up and running on a cluster
+## Running at scale
 
-All steps are resumable: each finished fit is written to disk as it completes, and a rerun continues where it stopped. What to change for a bigger run:
+All steps are resumable: each finished fit is written to disk as it completes, and a rerun continues where it stopped.
 
-- **Step 2 (made-up systems):** python scripts/step2.py run -n N. Cost roughly 70 CPU-core hours for 20,000 systems (four orbit models per system, with and without the companion). Each system is defined by its seed, so the work can be split by seed ranges between machines.
-- **Step 3 (real stars):** the sample size is set by --stars (default 300,000; up to the 578,498 selected), --sky-fraction (default 0.25, maximum 0.52; a larger sky fraction needs a new download) and --inj-fits (injections for the completeness, default 15,000). Cost roughly 180 CPU-core hours for the default; it grows in proportion to the number of fitted stars, which is about 8% of all stars per multiplicity scenario, plus the injections.
-- **Cluster:** python scripts/step3.py --part k/n fits only the k-th of n equal parts (k = 0 to n − 1) and writes fits.part<k>of<n>.csv. Each part can run as a separate job on its own node (same code, same data folder, Gaiamock installed). When all parts are done, the part files are copied into results/step3_gaia/ and python scripts/step3.py --merge-parts joins them and produces the summary and figures. The -j option sets the number of cores per job.
-- **Multiplicity scan and step 4** need no new fits; they reanalyse the step 3 fits in minutes (python scripts/step3.py --analyse; python scripts/step4.py). Their precision improves directly with a bigger step 3 sample.
-- **Numbers to change** in the code for other assumptions: occurrence model and multiplicity (src/gaiabias/population.py), detection rule (src/gaiabias/step2/outcomes.py), radial-velocity instruments (src/gaiabias/rv.py), multiplicity scan grid (SCAN_F in scripts/step3.py), flags (FLAGS in scripts/step4.py).
+- **Step 2 (made-up systems):** python scripts/step2.py run -n N -j CORES. Roughly 70 core-hours for 20,000 systems; each system is defined by its seed.
+- **Step 3 (real stars):** by default every selected star over the whole sky (about 2.3 million) with --inj-fits injections; about 1,100 core-hours with 50,000 injections (17 hours on 64 cores). --stars N takes a random subset and --sky-fraction a random subset of the HEALPix tiles; --variant selects a population variant; --circles reproduces the 25% sky sample of 3° circles used up to version 0.2.0. The cost grows with the number of fitted stars (about 8% of all stars per scenario) plus the injections.
+- **Clusters (SLURM):** python scripts/step3.py --build-only, then one array task per part with --part k/n, then --merge-parts; templates in tools/slurm/. Nothing needs MPI: every fit is independent.
+- **Shared servers without a queue:** tools/remote_runs/ is a template for running jobs from a private GitHub repository through a GitHub Actions runner on the server: a pushed job file starts the run, the output is visible on GitHub, and summaries and figures are pushed back. Jobs run at normal priority by default (a job can ask for a lower one) and on a fixed number of cores.
+- **Measured speed:** on a two-socket AMD EPYC 7552 server one orbit fit takes 0.49 s on one core; 64 workers run 59 times faster than one, 96 workers 78 times (hyperthreads add about 38% more at 192).
+- **Multiplicity scan and step 4** need no new fits; they reanalyse the step 3 fits in minutes (python scripts/step3.py --analyse; python scripts/step4.py --root ... --out ...).
+- **Numbers to change** in the code for other assumptions: occurrence model, multiplicity and variants (src/gaiabias/population.py), detection rule (src/gaiabias/step2/outcomes.py), radial-velocity instruments (src/gaiabias/rv.py), multiplicity scan grid (SCAN_F in scripts/step3.py), flags (FLAGS in scripts/step4.py).
 
 ## DR4 pre-release check
 
@@ -405,23 +380,30 @@ The DR4 pre-release (June 2026) provides per-CCD epoch astrometry for 12 sources
 - **Fitter on real data:** our orbit fit recovers the published orbits of HD 114762 (P = 83.8 d), Gaia-4 (579 d, 10.8 M_J) and Gaia BH3 (4,184 d, e = 0.73, about 35 M_sun). For Gaia-4 the BIC correctly rejects the acceleration and two-planet models.
 - **DR4 data model:** epoch astrometry is per CCD for all sources; the orbit tables contain Orbital, OrbitalPoorlyConstrained (significance < 5) and OrbitalAlternative solutions, and OrbitalAlternativeAcceleration, OrbitalAlternativeJerk and OrbitalAlternativeMultiple solutions "mainly for low S/N systems". Each source has one adopted solution per table. The rules for which sources are processed and which solution is adopted are not given in the data model.
 
+## Real DR4 data: input pipeline (src/gaiabias/dr4.py, scripts/dr4_fit.py)
+
+- **Reading.** Any file with the DR4 data-model columns of the epoch-astrometry table: the pre-release VOTable (read without astropy) or ECSV, CSV or FITS files read with astropy (the format of the bulk DR4 files is not yet published).
+- **Per transit.** The CCD measurements of a transit that AGIS used (used_by_agis_al, which excludes the SkyMapper CCD) are combined into their inverse-variance weighted mean, the form used in the simulations; this is justified by the independence of CCDs within a transit measured on the pre-release. Orbit fits use the formal errors; for the single-star model the source's excess noise can be added (--excess).
+- **Fits.** scripts/dr4_fit.py fits every source with the seven models of step 2, adopts the lowest BIC and reports planets with the project's detection rule; results are appended per source (resumable) and the work can be split with --part k/n. Host masses come from a given table, the whole-sky DR3 star file (FLAME or the mass-magnitude relation), or the mass-magnitude relation with the 5-parameter parallax.
+- **Check on the pre-release.** Per-transit data reproduce the per-CCD results: Gaia-4 b at 579 ± 3 d and 10.8 M_J (adopted model: one planet), HD 114762 at 83.8 d and Gaia BH3 at 4,184 d with e = 0.73 (stellar and black-hole companions, not reported as planets); the single stars and quasars are adopted as no planet.
+
 ## Caveats
 
-- Our "best model by BIC" is an assumption about how DR4 chooses between its models; DR4's real processing and acceptance rules are not yet published. A DR3-like pipeline would try orbits only for stars with RUWE > 1.4, which would exclude most planet hosts (Q5); in that case most planets would be found by users fitting the epoch astrometry, which is what our analyses represent.
-- Planet-planet interactions are ignored (orbits are added); orbits are not assumed to be coplanar. An N-body check (extended analyses) shows that 72% of the simulated neighbouring pairs are dynamically unstable, mostly the strongly inclined ones; the multiplicity bias in the well-measured region is the same when only stable systems are kept.
+- Our "best model by BIC" is an assumption about how DR4 chooses between its models; DR4's real processing and acceptance rules are not yet published. A DR3-like pipeline would try orbits only for stars with RUWE > 1.4, which would exclude most planet hosts (Q5); in that case most planets would be found by users fitting the epoch astrometry, which is what our analyses represent. Against the true systems the BIC and the Bayesian evidence do about equally well, with different weaknesses at the boundary between a trend and a second orbit (extended analyses).
+- Planet-planet interactions are ignored (orbits are added). In the reference population orientations are independent and only the Hill test is applied; a variant with systems made stable (N-body) and nearly coplanar gives the same well-measured result, while the full-range power-law bias is about 25% smaller (extended analyses).
 - Stellar and brown-dwarf companions are not in the reference population. A separate test adds them (extended analyses): stellar binaries with nearly equal components can be reported as planets.
-- The BIC choice appears to adopt the two-orbit model too easily compared with the Bayesian evidence (extended analyses).
-- Star masses come from the mass-magnitude relation, not Gaia's FLAME masses.
-- The occurrence-rate bias depends on the assumed multiplicity; the scan covers 0 to 79% of hosts with a second giant. Within multi-giant systems the period and mass distribution is that of the occurrence model with the stability requirement.
+- Completeness averaged over the whole population is not adequate in cells of low completeness (extended analyses, "Why the power law of planets alone drifts"); the full-range power-law rates are model-dependent and the well-measured rate is the primary result.
+- Star masses come from Gaia FLAME (23%) or the mass-magnitude relation.
+- The occurrence-rate bias depends on the assumed multiplicity; the scan covers 0 to 80% of hosts with a second giant. Within multi-giant systems the period and mass distribution is that of the occurrence model with the stability requirement.
 - The period rule is a linearised approximation to L&W's MCMC rule, checked on a small sample.
 - The radial-velocity estimates use simple scaling relations for instrument precision, a fixed jitter and idealised sampling; real programmes depend on weather, scheduling and stellar activity. They give the order of magnitude of the effort, not an observing proposal.
 
 ## Possible extensions
 
-- A planet population drawn to be dynamically stable from the start, and nearly coplanar systems, as the reference population.
+- Completeness measured star by star (injections into each star's own observations), as planned for the real DR4 data, instead of a population average.
 - Stellar and brown-dwarf companions with properties taken from Gaia DR3 non-single-star solutions, in the RUWE and occurrence-rate analysis.
 - Planets in binaries (a planet orbiting one star of a binary): the binary appears as a slow curvature over the DR4 span and the planet's signal is diluted by the companion's light; a periodogram of the residuals followed by a joint fit, tested on simulated hierarchical systems.
-- Larger step 3 samples (all selected stars, or the full sky) on a computing cluster.
+- Resonant systems with planet-planet interactions (N-body orbits) instead of Keplerian sums, near 2:1.
 - Running the pipeline on the real DR4 epoch astrometry: completeness by injection into the real data, and occurrence rates with the multiplicity correction.
 
 ## How to reproduce
@@ -447,3 +429,8 @@ See the README for installation, the order in which to run the scripts, and the 
 - Rein, H. & Liu, S.-F. 2012, A&A 537, A128, rebound; Rein, H. & Tamayo, D. 2015, MNRAS 452, 376, WHFast.
 - Cincotta, P. M. & Simó, C. 2000, A&AS 147, 205, the MEGNO chaos indicator.
 - NASA Exoplanet Archive, Planetary Systems Composite Parameters, doi:10.26133/NEA13.
+- Greenfield, E. J. & Owen, J. E. 2026, Detecting multiple planets in Gaia data using Bayesian model selection, arXiv:2610.07149.
+- Yahalomi, D. A. et al. 2026, ApJL, the astrometric resoeccentric degeneracy, arXiv:2512.02007.
+- Fabrycky, D. C. et al. 2014, ApJ 790, 146, architecture of Kepler's multi-transiting systems (mutual inclinations).
+- Górski, K. M. et al. 2005, ApJ 622, 759, HEALPix.
+- Marcussen et al. 2026, near-twin binary impostors among Gaia DR3 substellar candidates, arXiv:2609.08590.

@@ -5,9 +5,26 @@ __pycache__/
 .venv/
 results/*
 !results/.gitkeep
+# extended analyses: keep summaries, figures and small tables so results can be shared through git
+!results/extended/
+results/extended/*/*
+!results/extended/*/summary.txt
+!results/extended/*/*.png
+!results/extended/census/hosts.csv
+!results/extended/census/sensitivity.csv
+!results/extended/evidence*/evidence.csv
+!results/extended/observability/observability.csv
+!results/extended/stability_nbody/pairs.csv
+!results/extended/stability_all/pairs.csv
+!results/extended/rv_grid*/rv_grid.csv
 *.so
 .ipynb_checkpoints/
-data/
+data/*
+!data/extended/
+!data/dr4_prerelease/
+data/extended/*
+!data/extended/pairs_for_nbody.csv
+!data/extended/pairs_all.csv
 research_notes/
 reports/
 tests/data/

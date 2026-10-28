@@ -1,0 +1,8 @@
+# First test: runs the test suite and checks the gaiamock setup. Takes a few minutes.
+# To start it, copy this file into jobs/ and push.
+name      = "0001-test"
+code_ref  = "main"
+cores     = 8
+max_hours = 1
+command   = "pytest -q && python scripts/check_setup.py && nproc && free -h"
+collect   = []

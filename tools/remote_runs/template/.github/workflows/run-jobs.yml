@@ -1,0 +1,25 @@
+name: Run jobs on the server
+
+on:
+  push:
+    branches: [main]
+    paths: ["jobs/*.toml"]
+  workflow_dispatch:          # "Run workflow" button on the Actions tab: runs any job that was missed
+
+permissions:
+  contents: write             # to push results/
+
+concurrency:
+  group: server               # one sweep at a time; the running sweep also picks up jobs pushed meanwhile
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: [self-hosted, gaia-runner]   # the label given in runner/config.sh (RUNNER_LABEL)
+    timeout-minutes: 7200     # 5 days, the limit for self-hosted runners
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run pending jobs
+        run: bash runner/sweep.sh

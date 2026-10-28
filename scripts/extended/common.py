@@ -18,7 +18,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts"))
 
-STEP3 = REPO / "results" / "step3_gaia"
+STEP3 = REPO / "results" / "step3_allsky"       # whole-sky step 3 (default since 0.3.0)
 OUT = REPO / "results" / "extended"
 DATA = REPO / "data" / "extended"
 

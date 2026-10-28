@@ -182,14 +182,16 @@ def main():
         todo = [(g, s) for g, s in select_seeds(a.per_group) if s not in done]
         print(f"{len(done)} systems done, {len(todo)} to go", flush=True)
         t = C.Timer()
-        for i in range(0, len(todo), 24):
-            rows = Parallel(n_jobs=a.jobs)(delayed(run_one)(g, s, a.prior_scale, a.nlive, a.synthetic)
-                                           for g, s in todo[i:i + 24])
-            with open(path, "a", newline="") as f:
-                w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
-                for r in rows:
-                    w.writerow(r)
-            print(f"  {i + len(rows)}/{len(todo)} ({t})", flush=True)
+        tasks = (delayed(run_one)(g, s, a.prior_scale, a.nlive, a.synthetic) for g, s in todo)
+        # every worker stays busy: rows are written as each system finishes (no waiting for the
+        # slowest system of a batch), so an interrupted run loses at most the systems in progress
+        with open(path, "a", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+            for k, r in enumerate(Parallel(n_jobs=a.jobs, return_as="generator_unordered")(tasks), 1):
+                w.writerow(r)
+                f.flush()
+                if k % 24 == 0 or k == len(todo):
+                    print(f"  {k}/{len(todo)} ({t})", flush=True)
     rows = list(csv.DictReader(open(path)))
     L = ["=== BAYESIAN EVIDENCE VS THE BIC CHOICE ===",
          f"{len(rows)} step-2 systems (both planets present); linear prior scale x{a.prior_scale:g}.",

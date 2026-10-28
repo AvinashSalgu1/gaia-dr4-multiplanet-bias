@@ -148,6 +148,29 @@ def test_lw_distance_limit_peaks_at_MG_2p8():
     assert r[3] == pytest.approx(1600.0 * 10 ** (-0.093 * 7.2))      # ~340 pc for an early M dwarf
 
 
+def test_gaia_sky_tiles_cover_the_sky_by_source_id():
+    """Whole-sky layout: 768 HEALPix level-3 tiles as source_id ranges that tile the id space,
+    match the HEALPix pixel of the position, and give a random-order subset for any sky fraction."""
+    from gaiabias import gaia_stars as GS
+    ranges = [GS.tile_source_id_range(p) for p in range(GS.N_TILES)]
+    assert ranges[0][0] == 0 and all(a[1] == b[0] for a, b in zip(ranges, ranges[1:]))
+    assert ranges[-1][1] == 12 * 4 ** 12 * 2 ** 35            # every level-12 pixel, nothing beyond
+    assert GS.n_tiles_for(1.0) == 768 and GS.n_tiles_for(0.25) == 192
+    with pytest.raises(SystemExit):
+        GS.n_tiles_for(1.5)
+    assert sorted(GS.tile_order()) == list(range(GS.N_TILES)) and np.array_equal(GS.tile_order(), GS.tile_order())
+    assert GS.merged_path("tiles") != GS.merged_path("circles")
+    for m in GS.MIRRORS.values():
+        q = m["tile_query"].format(lo="0", hi=str(2 ** 53), plx_min="4.000000")
+        assert ">= 0" in q and f"< {2 ** 53}" in q and "4.000000" in q and "{" not in q and "CIRCLE" not in q
+        assert q.lstrip().upper().startswith("SELECT")
+    hp = pytest.importorskip("healpy")
+    rng = np.random.default_rng(1)
+    theta, phi = np.arccos(rng.uniform(-1, 1, 500)), rng.uniform(0, 2 * np.pi, 500)
+    sid = hp.ang2pix(4096, theta, phi, nest=True).astype(np.int64) << 35      # Gaia's source_id encoding
+    assert np.array_equal(sid >> GS.TILE_SHIFT, hp.ang2pix(8, theta, phi, nest=True))
+
+
 def test_gaia_download_queries_and_columns():
     """Both archives' queries format, and archive answers map to the Gaia column names whatever the case."""
     from gaiabias import gaia_stars as GS
@@ -248,3 +271,40 @@ def test_rv_helpers():
     assert RV.epochs_known_period(15.0, 3.0) == 6 and RV.epochs_known_period(3.0, 3.0) == 50
     # a slow companion is easier to catch over a longer programme
     assert RV.epochs_companion(30.0, 20.0, 3.0, 3.0) < RV.epochs_companion(30.0, 20.0, 3.0, 1.0)
+
+
+def test_population_variants():
+    """Variants change only multi-planet systems: near-coplanar orbits, low eccentricities; unknown names fail;
+    the default draws are unchanged by the refactor (same rng sequence)."""
+    from gaiabias.orbits import mutual_inclination
+    st = P.draw_stars(8_000, np.random.default_rng(6))
+    base = P.draw_planets(st, np.random.default_rng(7), "clustered")
+    again = P.draw_planets(st, np.random.default_rng(7), "clustered", variant=())
+    assert np.array_equal(base.P, again.P) and np.array_equal(base.inc, again.inc)
+    cop = P.draw_planets(st, np.random.default_rng(7), "clustered", variant=("coplanar",))
+    low = P.draw_planets(st, np.random.default_rng(7), "clustered", variant=("lowecc",))
+    for pl, check in ((cop, "inc"), (low, "e")):
+        n = np.bincount(pl.star)
+        multi = n[pl.star] >= 2
+        assert multi.sum() > 100
+        if check == "e":
+            assert np.median(pl.e[multi]) < 0.15 and np.median(pl.e[~multi]) > 0.15
+        else:
+            mi = []
+            for s in np.nonzero(n >= 2)[0][:300]:
+                ii = np.nonzero(pl.star == s)[0]
+                mi.append(np.degrees(mutual_inclination(pl.inc[ii[0]], pl.Omega[ii[0]], pl.inc[ii[1]], pl.Omega[ii[1]])))
+            assert np.median(mi) < 5 and max(mi) < 15
+    with pytest.raises(ValueError):
+        P.draw_planets(st, np.random.default_rng(7), "clustered", variant=("nonsense",))
+
+
+def test_nbody_stability_screen():
+    """A widely separated pair survives; a pair inside each other's Hill sphere does not."""
+    pytest.importorskip("rebound")
+    wide = [dict(m=1.0, P=365.25, e=0.0, inc=0.1, Omega=0.0, omega=0.0, Tp=0.0),
+            dict(m=1.0, P=365.25 * 8, e=0.0, inc=0.1, Omega=0.0, omega=0.0, Tp=100.0)]
+    tight = [dict(m=10.0, P=365.25, e=0.3, inc=0.1, Omega=0.0, omega=0.0, Tp=0.0),
+             dict(m=10.0, P=365.25 * 1.15, e=0.3, inc=0.1, Omega=0.0, omega=3.0, Tp=100.0)]
+    assert P.nbody_stable(1.0, wide, n_orbits=2000)
+    assert not P.nbody_stable(1.0, tight, n_orbits=2000)

@@ -58,6 +58,21 @@ of planets, so this does not bias the comparison. In the clustered scenario
 close pairs, so its realised rate is slightly lower and its period
 distribution slightly wider than the independent one; each scenario is always
 compared with its own realised truth.
+
+Variants (draw_planets(..., variant=...)) change only systems with two or more giants:
+
+* "coplanar": the first planet's orientation is random; every further planet is
+  tilted from it by a mutual inclination drawn from a Rayleigh distribution with
+  sigma = 2 deg (the scale measured for Kepler multi-planet systems, Fabrycky et
+  al. 2014), in a random direction. By default orientations are independent.
+* "stable": every multi-planet system is integrated with rebound (WHFast, MEGNO)
+  for STABLE_ORBITS orbits of its innermost planet; a close encounter (one mutual
+  Hill radius), an ejection or MEGNO > 4 marks it unstable, and the whole system
+  is redrawn (same number of planets) up to STABLE_ROUNDS times. A system that
+  is still unstable keeps only its first planet. Needs rebound.
+* "lowecc": eccentricities of planets in multi-planet systems from a Rayleigh
+  distribution with sigma = 0.1 instead of Kipping (2013); a bounding case for
+  dynamically cold systems (single planets keep Kipping).
 """
 from __future__ import annotations
 
@@ -76,6 +91,11 @@ M_STAR_NORM = 0.9
 BRYAN_COMP_FRAC = 0.52 * np.log(13.0) / np.log(20.0)   # 1-13 M_J instead of 1-20 M_J
 BRYAN_BOX = dict(m=(1.0, 13.0), a=(5.0, 20.0))
 N_REDRAW = 20
+MUTUAL_INC_SIGMA = np.radians(2.0)
+LOWECC_SIGMA = 0.1
+STABLE_ORBITS = 1e4
+STABLE_ROUNDS = 6
+VARIANTS = ("coplanar", "stable", "lowecc")
 
 _LNA = np.linspace(np.log(A_RANGE_AU[0]), np.log(A_RANGE_AU[1]), 4001)
 
@@ -290,8 +310,69 @@ def _as_comp(p):
     return Companion(p["m"], p["P"], p["e"], p["inc"], p["Omega"], p["omega"], p["Tp"])
 
 
-def draw_planets(stars: StarSample, rng, scenario: str = "independent") -> PlanetTable:
-    """Planets for every star under the given multiplicity scenario."""
+def _draw_system(rng, ms, n, variant=()):
+    """n planets on one star (Hill-stable pairs; variants as in the module docstring).
+    Returns (planets, n_dropped, n_redrawn)."""
+    from .orbits import orientation_relative_to
+    sysp, dropped, redrawn = [], 0, 0
+    for _ in range(n):
+        for k in range(N_REDRAW + 1):
+            p = _one_planet(rng, ms)
+            if n >= 2 and "lowecc" in variant:
+                p["e"] = float(min(rng.rayleigh(LOWECC_SIGMA), 0.95))
+            if sysp and "coplanar" in variant:
+                p["inc"], p["Omega"] = orientation_relative_to(sysp[0]["inc"], sysp[0]["Omega"],
+                                                               float(rng.rayleigh(MUTUAL_INC_SIGMA)),
+                                                               float(rng.uniform(0, 2 * np.pi)))
+            c = _as_comp(p)
+            if all(hill_stable(ms, c, _as_comp(q)) for q in sysp):
+                sysp.append(p)
+                redrawn += k > 0
+                break
+        else:
+            dropped += 1
+    return sysp, dropped, redrawn
+
+
+def nbody_stable(ms, planets, n_orbits=STABLE_ORBITS) -> bool:
+    """True if the system survives n_orbits of its innermost planet (rebound WHFast + MEGNO)."""
+    import rebound
+    if len(planets) < 2:
+        return True
+    sim = rebound.Simulation()
+    sim.units = ("yr", "AU", "Msun")
+    sim.add(m=ms)
+    for p in sorted(planets, key=lambda q: q["P"]):
+        P_yr = p["P"] / 365.25
+        sim.add(m=p["m"] * MJUP_MSUN, P=P_yr, e=p["e"], inc=p["inc"], Omega=p["Omega"],
+                omega=p["omega"] + np.pi,                      # planet = star's reflex omega + pi
+                M=(-2 * np.pi * (p["Tp"] / 365.25) / P_yr) % (2 * np.pi))
+    sim.move_to_com()
+    ps = sim.particles
+    r_hill = min(((ps[i].m + ps[i + 1].m) / (3 * ms)) ** (1 / 3) * 0.5 * (ps[i].a + ps[i + 1].a)
+                 for i in range(1, len(ps) - 1))
+    sim.integrator = "whfast"
+    sim.dt = ps[1].P / 30.0
+    sim.exit_max_distance = 100 * ps[len(ps) - 1].a
+    sim.exit_min_distance = r_hill
+    sim.init_megno()
+    try:
+        sim.integrate(n_orbits * ps[1].P, exact_finish_time=0)
+        return bool(sim.megno() <= 4)
+    except (rebound.Escape, rebound.Encounter):
+        return False
+    except Exception:
+        return False
+
+
+def draw_planets(stars: StarSample, rng, scenario: str = "independent", variant=(), jobs: int = 1,
+                 info: dict | None = None) -> PlanetTable:
+    """Planets for every star under the given multiplicity scenario and variants (module docstring).
+    `info`, if given, receives counts of the stability screening."""
+    variant = tuple(variant)
+    bad = set(variant) - set(VARIANTS)
+    if bad:
+        raise ValueError(f"unknown variant(s) {sorted(bad)}; choose from {VARIANTS}")
     lam = lambda_total(stars.m_star)
     if scenario == "independent":
         n_pl = rng.poisson(lam)
@@ -302,22 +383,36 @@ def draw_planets(stars: StarSample, rng, scenario: str = "independent") -> Plane
     else:
         raise ValueError(scenario)
 
-    rows = []
+    systems = {}
     dropped = redrawn = 0
     for s in np.nonzero(n_pl)[0]:
-        ms = float(stars.m_star[s])
-        sysp = []
-        for _ in range(n_pl[s]):
-            for k in range(N_REDRAW + 1):
-                p = _one_planet(rng, ms)
-                c = _as_comp(p)
-                if all(hill_stable(ms, c, _as_comp(q)) for q in sysp):
-                    sysp.append(p)
-                    redrawn += k > 0
-                    break
-            else:
-                dropped += 1
-        rows += [(s, p) for p in sysp]
+        sysp, d_, r_ = _draw_system(rng, float(stars.m_star[s]), int(n_pl[s]), variant)
+        systems[s] = sysp
+        dropped, redrawn = dropped + d_, redrawn + r_
+    if "stable" in variant:
+        from joblib import Parallel, delayed
+        pending = [s for s, p in systems.items() if len(p) >= 2]
+        n_multi, n_first_unstable, rounds = len(pending), None, 0
+        for rounds in range(STABLE_ROUNDS + 1):
+            if not pending:
+                break
+            ok = Parallel(n_jobs=jobs, batch_size=64)(delayed(nbody_stable)(float(stars.m_star[s]), systems[s])
+                                                      for s in pending)
+            pending = [s for s, good in zip(pending, ok) if not good]
+            if n_first_unstable is None:
+                n_first_unstable = len(pending)
+            if rounds == STABLE_ROUNDS:
+                break
+            for s in pending:                                  # redraw the whole system
+                sysp, d_, r_ = _draw_system(rng, float(stars.m_star[s]), len(systems[s]), variant)
+                systems[s] = sysp
+        for s in pending:                                      # still unstable: keep the first planet only
+            dropped += len(systems[s]) - 1
+            systems[s] = systems[s][:1]
+        if info is not None:
+            info.update(n_multi=n_multi, n_unstable_first=n_first_unstable or 0, n_reduced=len(pending),
+                        stable_orbits=STABLE_ORBITS)
+    rows = [(s, p) for s, sysp in systems.items() for p in sysp]
 
     def col(k):
         return np.array([p[k] for _, p in rows], float)

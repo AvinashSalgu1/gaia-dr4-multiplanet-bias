@@ -2,16 +2,19 @@
 
 ONE command does everything, and every stage resumes where it stopped:
 
-    python scripts/step3.py                 # 300,000 real stars (~180 core-hours; see README)
-    python scripts/step3.py --stars 578498  # all selected stars in the downloaded sky area
+    python scripts/step3.py                 # every selected star over the whole sky -> results/step3_allsky/
+    python scripts/step3.py --stars 300000  # a random subset of them
     python scripts/step3.py --analyse       # only redo the summary and figures
     python scripts/step3.py --download-only # only fetch the Gaia stars (light on the CPU)
+    python scripts/step3.py --circles --stars 300000   # the 25% sky sample of versions <= 0.2.0
+                                                       # -> results/step3_gaia/
 
 Stages:
  1. STARS   Gaia DR3 stars closer than 250 pc, selected as Lammers & Winn
             Sec. 4.1 (main sequence, their distance limit), RUWE <= 1.4.
             Downloaded once with astroquery into data/gaia_dr3_250pc/ (skipped
-            if already there). See src/gaiabias/gaia_stars.py.
+            if already there): the whole sky by default, in 768 HEALPix tiles.
+            See src/gaiabias/gaia_stars.py.
  2. BUILD   a random subset of those stars; giant planets from the Lammers &
             Winn Eq. 23 occurrence model (CLS-normalised; 0.3-13 M_J, 0.1-30 au)
             under two multiplicity scenarios with the SAME mean number of
@@ -54,7 +57,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-RESULTS = Path(__file__).resolve().parents[1] / "results" / "step3_gaia"
+RESULTS = Path(__file__).resolve().parents[1] / "results" / "step3_gaia"           # --circles (<= 0.2.0)
+RESULTS_ALLSKY = Path(__file__).resolve().parents[1] / "results" / "step3_allsky"   # default (tiles)
 SCENARIOS = ["independent", "clustered"]
 FITTED = ["one", "accel", "jerk", "two"]          # DR4's orbit models (step 2 code)
 JUDGED = ["one", "accel", "jerk", "two", "best"]  # "best" = lowest BIC among all models (DR4-like choice)
@@ -121,7 +125,10 @@ def _draw_injections(stars, rng, target_fits, block=100_000):
     return np.concatenate(rows), np.concatenate(idx), np.concatenate(all_m), np.concatenate(all_P)
 
 
-def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_override=None):
+def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_override=None,
+          sky=("circles", None), variant=(), n_jobs: int = 1):
+    """sky = (layout, sky fraction asked for); n_stars <= 0 means every selected star;
+    variant: population variants of gaiabias.population (coplanar, stable, lowecc)."""
     from gaiabias.population import draw_planets, host_fraction_clustered
 
     P = paths(root)
@@ -129,17 +136,20 @@ def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_ov
     t0 = time.perf_counter()
     if stars_override is None:
         from gaiabias import gaia_stars as GS
-        stars, info = GS.load_sample(n_stars, seed, ruwe_max)
+        stars, info = GS.load_sample(n_stars, seed, ruwe_max, layout=sky[0])
     else:
         stars, info = stars_override
     save = {f"star_{k}": getattr(stars, k) for k in stars.__dataclass_fields__}
     save["star_ruwe_dr3_real"] = info["ruwe"]
     jobs = []
-    meta = dict(n_stars=len(stars), seed=seed, ruwe_max=ruwe_max, s_cut=S_CUT, inj_fits=inj_fits,
+    meta = dict(n_stars=len(stars), n_stars_asked=n_stars, sky=list(sky), seed=seed, ruwe_max=ruwe_max,
+                s_cut=S_CUT, inj_fits=inj_fits, variant=sorted(variant),
                 host_fraction=host_fraction_clustered(), selection=info["counts"],
                 n_selected=info["n_selected"], frac_flame_mass=info["frac_flame_mass"], scen={})
     for si, scen in enumerate(SCENARIOS):
-        pl = draw_planets(stars, np.random.default_rng([seed, 1 + si]), scen)
+        vinfo = {}
+        pl = draw_planets(stars, np.random.default_rng([seed, 1 + si]), scen, variant=variant,
+                          jobs=n_jobs, info=vinfo)
         for k in ("star", "m", "P", "a", "e", "inc", "Omega", "omega", "Tp"):
             save[f"{scen}_{k}"] = getattr(pl, k)
         snr, ssum, npl = _snr_sum(stars, pl)
@@ -165,7 +175,7 @@ def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_ov
         meta["scen"][scen] = dict(n_planets=len(pl), dropped=pl.n_dropped, redrawn=pl.n_redrawn,
                                   hosts=int((npl > 0).sum()), multi_hosts=int((npl >= 2).sum()),
                                   n_A=int(len(fit_stars)), n_B=int((multi & (snr >= S_CUT)).sum()),
-                                  n_V=int(min(N_VAL, len(below))))
+                                  n_V=int(min(N_VAL, len(below))), stability=vinfo)
     rng_n = np.random.default_rng([seed, 30])
     for s in rng_n.choice(len(stars), size=min(N_NULL, len(stars)), replace=False):
         jobs.append(dict(job=f"N-{s}", kind="N", scen="", star=int(s), planets=""))
@@ -196,13 +206,18 @@ def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_ov
           f"{n_fit * SEC_PER_JOB / 3600 / ncpu:.1f} h on the {ncpu} cores of this machine")
 
 
-def built_matches(root: Path, n_stars, inj_fits, seed, ruwe_max) -> bool:
+def built_matches(root: Path, n_stars, inj_fits, seed, ruwe_max, sky=("circles", None), variant=()) -> bool:
     P = paths(root)
     if not (P["meta"].exists() and P["pop"].exists() and P["jobs"].exists()):
         return False
     m = json.loads(P["meta"].read_text())
-    want_n = min(n_stars, m.get("n_selected", n_stars))
-    return (m.get("n_stars") == want_n and m.get("inj_fits") == inj_fits and m.get("seed") == seed
+    if list(m.get("sky", ["circles", None])) != list(sky) or m.get("variant", []) != sorted(variant):
+        return False
+    if n_stars <= 0:
+        same_n = m.get("n_stars_asked", m.get("n_stars")) == n_stars or m.get("n_stars") == m.get("n_selected")
+    else:
+        same_n = m.get("n_stars") == min(n_stars, m.get("n_selected", n_stars))
+    return (same_n and m.get("inj_fits") == inj_fits and m.get("seed") == seed
             and m.get("ruwe_max", "unset") == ruwe_max)
 
 
@@ -544,6 +559,15 @@ def summary_lines(meta, res, ruwe, which_done):
           "within 10%, mass within 20% of a real planet), 'imprecise' (within x1.5 in period and x2 in mass: a real",
           "planet, poorly measured) or 'spurious' (no real planet resembles it). Power laws are fitted by forward",
           "modelling through the injection response (true -> fitted parameters).", ""]
+    if meta.get("variant"):
+        L.append(f"POPULATION VARIANT: {', '.join(meta['variant'])} (see src/gaiabias/population.py)")
+        for scen, dd in meta["scen"].items():
+            st = dd.get("stability") or {}
+            if st:
+                L.append(f"  [{scen}] N-body screening ({st['stable_orbits']:.0e} inner orbits): "
+                         f"{st['n_unstable_first']} of {st['n_multi']} multi-planet systems unstable when first "
+                         f"drawn; {st['n_reduced']} still unstable after redrawing (kept their first planet only)")
+        L.append("")
     for a, r in res.items():
         L.append(f"--- {LABEL[a]} ---  (injections fitted: {r['I_done']}/{meta['n_I']})")
         for scen, s in r["scen"].items():
@@ -1008,7 +1032,8 @@ def analyse(root: Path, which):
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0],
                                 formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
-    p.add_argument("--stars", type=int, default=300_000, help="random subset of the selected Gaia stars")
+    p.add_argument("--stars", type=int, default=0,
+                   help="random subset of the selected Gaia stars (0 = all of them, the default)")
     p.add_argument("--inj-fits", type=int, default=15_000, help="single-planet injections to fit (completeness)")
     p.add_argument("--ruwe-max", type=float, default=1.4, help="drop real stars above this RUWE (0 = no cut)")
     p.add_argument("--with-dr3-pipeline", action="store_true", help="also run the (slow) DR3-style cascade")
@@ -1016,45 +1041,67 @@ def main():
     p.add_argument("-j", "--jobs", type=int, default=-1)
     p.add_argument("--analyse", action="store_true", help="only redo summary and figures")
     p.add_argument("--download-only", action="store_true", help="only fetch the Gaia stars (no fitting)")
+    p.add_argument("--build-only", action="store_true",
+                   help="download if needed and build stars, planets and the job list, then stop "
+                        "(before starting --part jobs on a cluster)")
     p.add_argument("--rebuild", action="store_true", help="redraw stars and planets (deletes old fits)")
     p.add_argument("--source", choices=["auto", "vizier", "esa"], default="auto",
                    help="archive for the Gaia download (auto: VizieR first, ESA if a piece stalls)")
-    p.add_argument("--sky-fraction", type=float, default=0.25,
-                   help="fraction of the sky to download (random 3-deg circles; max 0.52)")
+    p.add_argument("--sky-fraction", type=float, default=None,
+                   help="fraction of the sky to download (default: 1 = whole sky; 0.25 with --circles)")
+    p.add_argument("--circles", action="store_true",
+                   help="use the 3-deg sky circles of versions <= 0.2.0 (max 0.52 of the sky) "
+                        "and results/step3_gaia/")
+    p.add_argument("--variant", default="",
+                   help="population variants, comma-separated: coplanar, stable, lowecc "
+                        "(results go to results/step3_allsky_<variants> unless --out is given)")
+    p.add_argument("--out", type=Path, default=None,
+                   help="results folder (default results/step3_allsky/, or results/step3_gaia/ with --circles)")
     p.add_argument("--download-jobs", type=int, default=6, help="sky circles requested at the same time")
     p.add_argument("--part", default=None, help="k/n: fit only part k of n (0-based), e.g. one cluster job each")
     p.add_argument("--merge-parts", action="store_true", help="join the --part results into fits.csv")
     a = p.parse_args()
+    layout = "circles" if a.circles else "tiles"
+    if a.sky_fraction is None:
+        a.sky_fraction = 0.25 if a.circles else 1.0
+    sky = (layout, a.sky_fraction)
+    variant = tuple(sorted(v.strip() for v in a.variant.split(",") if v.strip()))
+    default_root = RESULTS if a.circles else RESULTS_ALLSKY
+    if variant:
+        default_root = default_root.with_name(default_root.name + "_" + "_".join(variant))
+    root = a.out or default_root
     ruwe_max = None if a.ruwe_max <= 0 else a.ruwe_max
     part = tuple(int(x) for x in a.part.split("/")) if a.part else None
     if a.merge_parts:
-        merge_parts(RESULTS)
-        analyse(RESULTS, FITTED + (["dr3"] if a.with_dr3_pipeline else []))
+        merge_parts(root)
+        analyse(root, FITTED + (["dr3"] if a.with_dr3_pipeline else []))
         return
     which = FITTED + (["dr3"] if a.with_dr3_pipeline else [])
-    root = RESULTS
     if not a.analyse:
         from gaiabias import gaia_stars as GS
-        if not GS.have_stars():
-            print(f"1. downloading Gaia DR3 stars (once; random sky circles, resumable) ...", flush=True)
-            GS.download(sky_fraction=a.sky_fraction, source=a.source, jobs=a.download_jobs)
+        if not GS.have_stars(layout, a.sky_fraction):
+            print(f"1. downloading Gaia DR3 stars (once; {100 * a.sky_fraction:.0f}% of the sky in "
+                  f"{layout}, resumable) ...", flush=True)
+            GS.download(sky_fraction=a.sky_fraction, source=a.source, jobs=a.download_jobs, layout=layout)
         else:
-            print(f"1. Gaia DR3 stars already downloaded ({GS.MERGED})")
+            print(f"1. Gaia DR3 stars already downloaded ({GS.merged_path(layout)})")
         if a.download_only:
             import numpy as _np
-            sel, counts = GS.select(dict(_np.load(GS.MERGED)), ruwe_max)
+            sel, counts = GS.select(dict(_np.load(GS.merged_path(layout))), ruwe_max)
             for k, v in counts.items():
                 print(f"    {k}: {v}")
             return
-        if a.rebuild or not built_matches(root, a.stars, a.inj_fits, a.seed, ruwe_max):
+        if a.rebuild or not built_matches(root, a.stars, a.inj_fits, a.seed, ruwe_max, sky, variant):
             if paths(root)["fits"].exists():
                 old = paths(root)["fits"].with_suffix(f".old{int(time.time())}.csv")
                 paths(root)["fits"].rename(old)
                 print(f"   settings changed: old fits moved to {old.name}")
             print("2. building stars, planets and the job list ...", flush=True)
-            build(root, a.stars, a.inj_fits, a.seed, ruwe_max)
+            build(root, a.stars, a.inj_fits, a.seed, ruwe_max, sky=sky, variant=variant, n_jobs=a.jobs)
         else:
             print("2. stars and planets already built with these settings")
+        if a.build_only:
+            return
         print("3. fitting ..." + (f" (part {part[0]} of {part[1]})" if part else ""), flush=True)
         fit(root, which, a.jobs, part=part)
         if part:
