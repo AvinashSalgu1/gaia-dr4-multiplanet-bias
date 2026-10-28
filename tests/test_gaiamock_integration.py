@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from gedi import gaiamock_bridge as gb
+from gaiabias import gaiamock_bridge as gb
 
 pytestmark = pytest.mark.skipif(not gb.available() or gb.n_scan_files() < 49152,
                                 reason="gaiamock (compiled) and full healpix_scans/ required")
@@ -12,8 +12,8 @@ RA, DEC = 120.0, -35.0
 
 def test_signal_matches_gaiamock_a0_predictor(monkeypatch):
     """Our reflex signal == gaiamock's, on identical epochs, with noise switched off."""
-    from gedi.epochs import Epochs
-    from gedi.orbits import thiele_innes, sky_offsets
+    from gaiabias.epochs import Epochs
+    from gaiabias.orbits import thiele_innes, sky_offsets
 
     gm = gb.gaiamock()
     monkeypatch.setattr(gm, "al_uncertainty_per_ccd_interp", lambda G: 0.0 * np.asarray(G))
@@ -29,10 +29,10 @@ def test_signal_matches_gaiamock_a0_predictor(monkeypatch):
 
 
 def test_single_planet_recovered():
-    from gedi import epochs as E
-    from gedi.fitting import fit_one_companion, lammers_winn_detected
-    from gedi.orbits import Companion
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import fit_one_companion, lammers_winn_detected
+    from gaiabias.orbits import Companion
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(3)
     ep = E.from_gaiamock(RA, DEC, "dr4", rng=rng)
@@ -46,9 +46,9 @@ def test_single_planet_recovered():
 
 
 def test_no_planet_not_detected():
-    from gedi import epochs as E
-    from gedi.fitting import fit_one_companion, lammers_winn_detected
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import fit_one_companion, lammers_winn_detected
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(4)
     ep = E.from_gaiamock(RA, DEC, "dr4", rng=rng)
@@ -60,7 +60,7 @@ def test_no_planet_not_detected():
 
 
 def test_f2_matches_gaiamock():
-    from gedi.fitting import f2_statistic
+    from gaiabias.fitting import f2_statistic
     gm = gb.gaiamock()
     for n, red in [(60, 1.0), (80, 3.0), (150, 12.0)]:
         ours = f2_statistic(red * (n - 12), n)
@@ -71,10 +71,10 @@ def test_f2_matches_gaiamock():
 def test_numpy_optimiser_matches_gaiamock():
     """Our orbit-only optimiser (used for the orbit+trend comparison) reaches
     gaiamock's chi2 minimum (or better) on detectable planets."""
-    from gedi import epochs as E
-    from gedi.fitting import fit_one_companion, fit_orbit_trend
-    from gedi.orbits import Companion
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import fit_one_companion, fit_orbit_trend
+    from gaiabias.orbits import Companion
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(21)
     worse = 0
@@ -93,10 +93,10 @@ def test_numpy_optimiser_matches_gaiamock():
 
 
 def test_cascade_outcomes():
-    from gedi import epochs as E
-    from gedi.fitting import run_cascade
-    from gedi.orbits import Companion
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import run_cascade
+    from gaiabias.orbits import Companion
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(22)
     ep = E.from_gaiamock(RA, DEC, "dr4", rng=rng)
@@ -112,10 +112,10 @@ def _oe(sim):
 
 def test_ruwe_formula_matches_gaiamock_cascade():
     """Our RUWE (from the 5-parameter chi2) vs gaiamock's cascade value on the same data."""
-    from gedi import epochs as E
-    from gedi.fitting import fit_5par, ruwe_from_chi2, run_cascade
-    from gedi.orbits import Companion
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import fit_5par, ruwe_from_chi2, run_cascade
+    from gaiabias.orbits import Companion
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(31)
     for comps in ([], [Companion(1.0, 900.0, 0.1, 1.0, 0.3, 1.0, 50.0)]):

@@ -27,8 +27,8 @@ def main():
     p.add_argument("--root", type=C.Path, default=C.STEP3)
     a = p.parse_args()
     import step3 as S3
-    from gedi.orbits import reflex_a0_mas
-    from gedi.simulate import sigma_al_per_transit
+    from gaiabias.orbits import reflex_a0_mas
+    from gaiabias.simulate import sigma_al_per_transit
 
     z, meta, _, _ = C.load_step3(a.root)
     scale = 1.0 / S3.sky_fraction(meta)

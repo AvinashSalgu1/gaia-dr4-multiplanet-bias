@@ -116,7 +116,7 @@ def host_table(max_dist):
 
 # ---------------------------------------------------------------- sensitivity
 def host_epochs(h, synthetic, rng):
-    from gedi import epochs as E
+    from gaiabias import epochs as E
     if synthetic:
         return E.synthetic(n_transits=80, rng=rng)
     return E.from_gaiamock(h["ra"], h["dec"], "dr4", reject_frac=0.0, rng=rng)
@@ -124,10 +124,10 @@ def host_epochs(h, synthetic, rng):
 
 def sensitivity(h, n_inj, seed, synthetic=False):
     """Detections per (mass, period) cell for one host: array (len(M_GRID), len(P_GRID))."""
-    from gedi.epochs import Epochs
-    from gedi.fitting import detected_lw, fit_orbit_trend
-    from gedi.orbits import Companion, draw_ecc_kipping, reflex_a0_mas
-    from gedi.simulate import Star, sigma_al_per_transit, simulate
+    from gaiabias.epochs import Epochs
+    from gaiabias.fitting import detected_lw, fit_orbit_trend
+    from gaiabias.orbits import Companion, draw_ecc_kipping, reflex_a0_mas
+    from gaiabias.simulate import Star, sigma_al_per_transit, simulate
 
     rng = np.random.default_rng([seed, zlib.crc32(h["host"].encode())])
     ep_all = host_epochs(h, synthetic, rng)
@@ -195,7 +195,7 @@ def p_det_table(out):
 
 def expected(pdet, m_star, m_range=(0.3, 13.0), n_m=40, n_p=60):
     """Expected detected outer giants for one host at the field rate (step 3 occurrence model)."""
-    from gedi import population as POP
+    from gaiabias import population as POP
     lm = np.linspace(np.log(m_range[0]), np.log(m_range[1]), n_m)
     lp = np.linspace(np.log(0.3), np.log(20.0), n_p)
     dlm, dlp = lm[1] - lm[0], lp[1] - lp[0]

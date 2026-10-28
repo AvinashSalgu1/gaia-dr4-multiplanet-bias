@@ -56,18 +56,18 @@ GO_SINGLE = {"face-on": 0.89, "random": 1.01}              # GO DR4 single-plane
 
 # ---------------------------------------------------------------- simulation helpers
 def epochs(dr, seed):
-    from gedi import epochs as E
+    from gaiabias import epochs as E
     return E.from_gaiamock(RA, DEC, dr, rng=np.random.default_rng([seed, 1]))
 
 
 def mass_for_snr(snr, P_days, m_inner=0.0):
     """Planet mass [M_J] whose reflex a0 is snr * SIG (a0 is linear in m for m << M_star)."""
-    from gedi.orbits import reflex_a0_mas
+    from gaiabias.orbits import reflex_a0_mas
     return snr * SIG / reflex_a0_mas(M_STAR, 1.0, P_days, PLX, m_inner)
 
 
 def observe(ep, comps, rng):
-    from gedi.orbits import reflex_along_scan
+    from gaiabias.orbits import reflex_along_scan
     s, c = np.sin(ep.psi), np.cos(ep.psi)
     sig, a0 = reflex_along_scan(ep.t_yr, ep.psi, comps, M_STAR, PLX)
     y = PMRA * ep.t_yr * s + PMDEC * ep.t_yr * c + PLX * ep.plx_factor + sig + SIG * rng.standard_normal(len(ep))
@@ -75,7 +75,7 @@ def observe(ep, comps, rng):
 
 
 def companion(m, P, rng, inc=0.0, Omega=0.0, ecc=0.0):
-    from gedi.orbits import Companion
+    from gaiabias.orbits import Companion
     return Companion(m_mjup=m, P_days=P, ecc=ecc, inc=inc, Omega=Omega, omega=rng.uniform(0, 2 * np.pi),
                      Tp_days=rng.uniform(0, P))
 
@@ -104,7 +104,7 @@ def tasks_resoecc(dr):
 
 
 def run_resoecc(t):
-    from gedi.fitting import fit_one_companion, fit_two_planets
+    from gaiabias.fitting import fit_one_companion, fit_two_planets
     rng = np.random.default_rng([t["seed"], 11])
     ep = epochs(t["dr"], t["seed"])
     P_out, q = t["P_out"], t["q"]
@@ -187,7 +187,7 @@ def tasks_single(n=260):
 
 
 def run_single(t):
-    from gedi.fitting import fit_one_companion, lammers_winn_detected
+    from gaiabias.fitting import fit_one_companion, lammers_winn_detected
     rng = np.random.default_rng([t["seed"], 22])
     ep = epochs("dr4", t["seed"])
     P = np.exp(rng.uniform(np.log(0.3), np.log(3.0))) * 365.25
@@ -272,7 +272,7 @@ def tasks_second(n=30):
 
 
 def run_second(t):
-    from gedi.fitting import fit_orbit_trend, fit_two_planets
+    from gaiabias.fitting import fit_orbit_trend, fit_two_planets
     rng = np.random.default_rng([t["seed"], 33])
     ep = epochs("dr4", t["seed"])
     P_in = np.exp(rng.uniform(np.log(0.3), np.log(2.0))) * 365.25

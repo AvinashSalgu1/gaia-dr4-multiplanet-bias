@@ -4,7 +4,7 @@ Simulated two-planet systems (target planet in Gaia's detectable range + a
 companion anywhere from 30 days to 54 years), each analysed with the orbit
 models Gaia DR4 publishes - one planet, one planet + acceleration, one planet
 + jerk, two planets - and the DR4-like choice between them (lowest BIC),
-with and without the companion (identical noise). See src/gedi/step2/.
+with and without the companion (identical noise). See src/gaiabias/step2/.
 
 Run from the repository folder. Costs are rough, in CPU-core hours (divide by the
 number of cores for the wall-clock time):
@@ -54,10 +54,10 @@ def main():
     e.add_argument("--plot-only", action="store_true")
     a = p.parse_args()
 
-    from gedi.step2 import population as POP
-    from gedi.step2 import sweeps as SW
-    from gedi.step2.plots import analyse_population
-    from gedi.step2.sim import RESULTS
+    from gaiabias.step2 import population as POP
+    from gaiabias.step2 import sweeps as SW
+    from gaiabias.step2.plots import analyse_population
+    from gaiabias.step2.sim import RESULTS
 
     if a.what == "run":
         POP.run(a.n, a.jobs)
@@ -80,7 +80,7 @@ def main():
                        csv_path, a.jobs)
         SW.analyse(csv_path)
     elif a.what == "examples":
-        from gedi.step2 import examples as EX
+        from gaiabias.step2 import examples as EX
         if a.plot_only:
             EX.plot()
         else:

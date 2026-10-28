@@ -1,7 +1,5 @@
 # Gaia DR4 and multi-planet systems: questions, methods and results
 
-This document describes GEDI (Gaia Exoplanet Detection and Inference; Python package `gedi`, formerly `gaiabias`).
-
 
 ## About this document
 
@@ -200,7 +198,7 @@ L&W predict 7,500 ± 2,100 DR4 giant planets with at most one planet per star. O
 - Planets analysed: every planet reported for the real systems (A) by the best model by BIC (what DR4 would publish) and, for comparison, by the one-planet fit, in both multiplicity scenarios.
 - **Flags** use only quantities a DR4 user can see: the adopted model (other than a plain orbit), significance below 5 (OrbitalPoorlyConstrained), period above 0.7 T (3.8 yr), eccentricity of the one-planet fit above 0.5, Δχ² below 100 (near threshold), period error above 10%, RUWE above 1.2. A planet is **suspect** if any of the first four flags is set.
 - For each flag: share of planets flagged; share inaccurate (imprecise or spurious), spurious, and with a hidden giant (another giant of 0.3 to 13 M_J at 0.1 to 30 au on the star that was not reported), among flagged and unflagged planets; and the share of all inaccurate, spurious and hidden-giant cases that the flag catches.
-- **Radial velocities** (src/gedi/rv.py; all numbers are simple, documented assumptions):
+- **Radial velocities** (src/gaiabias/rv.py; all numbers are simple, documented assumptions):
 - Semi-amplitude K = 28.43 m/s × m sin i/M_J × (P/yr)^(−1/3) × (M*/M_sun)^(−2/3)/√(1 − e²), using the true inclinations.
 - V magnitude from G and BP − RP (Gaia DR3 relation of Riello et al. 2021), with BP − RP from M_G along the main-sequence locus used in the selection.
 - Precision per epoch: HARPS 1.0 m/s at V = 8 in 900 s (floor 0.5 m/s); FEROS 5.0 m/s at V = 8 in 1200 s (floor 4 m/s); photon noise scaling as 10^(0.2(V − 8)); stellar jitter 2 m/s (M* > 0.6 M_sun) or 3 m/s (M dwarfs); 300 s overhead per epoch. Practical faint limits V ≤ 12 (HARPS) and V ≤ 10 (FEROS).
@@ -269,7 +267,7 @@ The share of stars with a reported planet whose adopted model is not a plain orb
 
 ### Population variants (scripts/step3.py --variant)
 
-The reference population draws the orientations of the planets in a system independently and accepts any system whose pairs pass the Hill test, which does not guarantee long-term stability for eccentric or inclined pairs. Two variants change only the systems with two or more giants (src/gedi/population.py), and step 3 was repeated over the whole sky with each, with the same stars, injections and analysis:
+The reference population draws the orientations of the planets in a system independently and accepts any system whose pairs pass the Hill test, which does not guarantee long-term stability for eccentric or inclined pairs. Two variants change only the systems with two or more giants (src/gaiabias/population.py), and step 3 was repeated over the whole sky with each, with the same stars, injections and analysis:
 
 - **coplanar + stable:** every further planet is tilted from the first by a mutual inclination drawn from a Rayleigh distribution with σ = 2° (the scale measured for Kepler multi-planet systems; Fabrycky et al. 2014), and every multi-planet system is integrated with rebound (WHFast, MEGNO) for 10,000 orbits of its innermost planet when it is drawn. A close encounter within one mutual Hill radius, an ejection or MEGNO > 4 makes it unstable, and the whole system is redrawn (up to six times; a system that stays unstable keeps only its first planet).
 - **lowecc:** the eccentricities of planets in multi-planet systems are drawn from a Rayleigh distribution with σ = 0.1 instead of Kipping (2013), a bounding case for dynamically cold systems.
@@ -371,7 +369,7 @@ All steps are resumable: each finished fit is written to disk as it completes, a
 - **Shared servers without a queue:** tools/remote_runs/ is a template for running jobs from a private GitHub repository through a GitHub Actions runner on the server: a pushed job file starts the run, the output is visible on GitHub, and summaries and figures are pushed back. Jobs run at normal priority by default (a job can ask for a lower one) and on a fixed number of cores.
 - **Measured speed:** on a two-socket AMD EPYC 7552 server one orbit fit takes 0.49 s on one core; 64 workers run 59 times faster than one, 96 workers 78 times (hyperthreads add about 38% more at 192).
 - **Multiplicity scan and step 4** need no new fits; they reanalyse the step 3 fits in minutes (python scripts/step3.py --analyse; python scripts/step4.py --root ... --out ...).
-- **Numbers to change** in the code for other assumptions: occurrence model, multiplicity and variants (src/gedi/population.py), detection rule (src/gedi/step2/outcomes.py), radial-velocity instruments (src/gedi/rv.py), multiplicity scan grid (SCAN_F in scripts/step3.py), flags (FLAGS in scripts/step4.py).
+- **Numbers to change** in the code for other assumptions: occurrence model, multiplicity and variants (src/gaiabias/population.py), detection rule (src/gaiabias/step2/outcomes.py), radial-velocity instruments (src/gaiabias/rv.py), multiplicity scan grid (SCAN_F in scripts/step3.py), flags (FLAGS in scripts/step4.py).
 
 ## DR4 pre-release check
 
@@ -382,7 +380,7 @@ The DR4 pre-release (June 2026) provides per-CCD epoch astrometry for 12 sources
 - **Fitter on real data:** our orbit fit recovers the published orbits of HD 114762 (P = 83.8 d), Gaia-4 (579 d, 10.8 M_J) and Gaia BH3 (4,184 d, e = 0.73, about 35 M_sun). For Gaia-4 the BIC correctly rejects the acceleration and two-planet models.
 - **DR4 data model:** epoch astrometry is per CCD for all sources; the orbit tables contain Orbital, OrbitalPoorlyConstrained (significance < 5) and OrbitalAlternative solutions, and OrbitalAlternativeAcceleration, OrbitalAlternativeJerk and OrbitalAlternativeMultiple solutions "mainly for low S/N systems". Each source has one adopted solution per table. The rules for which sources are processed and which solution is adopted are not given in the data model.
 
-## Real DR4 data: input pipeline (src/gedi/dr4.py, scripts/dr4_fit.py)
+## Real DR4 data: input pipeline (src/gaiabias/dr4.py, scripts/dr4_fit.py)
 
 - **Reading.** Any file with the DR4 data-model columns of the epoch-astrometry table: the pre-release VOTable (read without astropy) or ECSV, CSV or FITS files read with astropy (the format of the bulk DR4 files is not yet published).
 - **Per transit.** The CCD measurements of a transit that AGIS used (used_by_agis_al, which excludes the SkyMapper CCD) are combined into their inverse-variance weighted mean, the form used in the simulations; this is justified by the independence of CCDs within a transit measured on the pre-release. Orbit fits use the formal errors; for the single-star model the source's excess noise can be added (--excess).

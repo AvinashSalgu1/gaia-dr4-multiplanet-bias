@@ -21,10 +21,10 @@ import common as C
 
 
 def main():
-    from gedi.step2 import population as POP
-    from gedi.step2.analyses import ANALYSES, LABEL
-    from gedi.step2.outcomes import exclusive_categories, judge_all
-    from gedi.step2.plots import regimes
+    from gaiabias.step2 import population as POP
+    from gaiabias.step2.analyses import ANALYSES, LABEL
+    from gaiabias.step2.outcomes import exclusive_categories, judge_all
+    from gaiabias.step2.plots import regimes
 
     if not POP.OUT_CSV.exists():
         raise SystemExit(f"{POP.OUT_CSV} not found: this needs the machine where step 2 was run")

@@ -16,7 +16,7 @@ Part 2 - radial-velocity follow-up. For the same planets, using the true systems
 RV semi-amplitudes of the reported planet and of any hidden giant, the V magnitude, and
 the number of HARPS or FEROS epochs (and telescope hours) needed to confirm the Gaia
 orbit, to reject a spurious one, and to detect the hidden giant (as an orbit, or as a
-trend over the programme). Instrument assumptions are in src/gedi/rv.py.
+trend over the programme). Instrument assumptions are in src/gaiabias/rv.py.
 
 Bigger samples: everything scales with the step 3 sample (python scripts/step3.py --stars,
 --sky-fraction, --inj-fits); this script only needs the resulting folder.
@@ -67,8 +67,8 @@ def load(root):
 def planet_table(z, meta, jobs, d, analysis, scen, baseline_yr):
     """One row per planet reported in A (real systems) for one analysis and scenario."""
     import step3 as S3
-    from gedi import rv as RV
-    from gedi.step2.outcomes import bic_choice, reported
+    from gaiabias import rv as RV
+    from gaiabias.step2.outcomes import bic_choice, reported
 
     pos = {j: k for k, j in enumerate(d["job"])}
     rep = reported(d, analysis, "w")
@@ -154,13 +154,13 @@ def flag_stats(t):
 
 def summary(tabs, stats, meta, baseline_yr, scale):
     import step3 as S3
-    from gedi import rv as RV
+    from gaiabias import rv as RV
     L = ["=== STEP 4 SUMMARY ===",
          f"Source: step 3 fits ({meta['n_stars']:,} real Gaia stars <= 250 pc). Full-sky scaling x{scale:.2f} "
          f"({meta['n_selected']:,} selected stars / sky fraction {S3.sky_fraction(meta):.2f} / stars used).",
          "Accuracy of a reported planet: correct / imprecise / spurious (step 3 definitions); 'not accurate' = "
          "imprecise or spurious. 'Hidden giant' = another giant planet on the star that was not reported.",
-         f"RV programme baseline for companions: {baseline_yr:g} yr; detection = 5 sigma (src/gedi/rv.py).", ""]
+         f"RV programme baseline for companions: {baseline_yr:g} yr; detection = 5 sigma (src/gaiabias/rv.py).", ""]
     for an, lab in ANALYSES.items():
         for scen in S3.SCENARIOS:
             t, st = tabs[(an, scen)], stats[(an, scen)]
@@ -210,7 +210,7 @@ def summary(tabs, stats, meta, baseline_yr, scale):
 
 def plot(tabs, stats, png_flags, png_rv, baseline_yr):
     import step3 as S3
-    from gedi import rv as RV
+    from gaiabias import rv as RV
     plt, ps = S3._setup()
     keys = list(FLAGS) + ["suspect"]
     labels = [FLAGS[k][0] if k in FLAGS else "SUSPECT\n(any of the first four)" for k in keys]

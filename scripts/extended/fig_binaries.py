@@ -23,8 +23,8 @@ def main():
     p.add_argument("--root", type=C.Path, default=C.STEP3)
     a = p.parse_args()
     import g2_mixed_flags as M
-    from gedi.orbits import reflex_a0_mas
-    from gedi.simulate import snr1
+    from gaiabias.orbits import reflex_a0_mas
+    from gaiabias.simulate import snr1
     with np.load(a.root / "population.npz") as f:
         z = {k: f[k] for k in f.files if k.startswith("star_")}
     rows = [r for r in M.draw_systems(z, 3000, 6000) if r["kind"] == "stellar"]

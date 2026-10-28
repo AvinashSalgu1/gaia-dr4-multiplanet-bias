@@ -12,19 +12,19 @@ pytestmark = pytest.mark.skipif(not DATA.exists(), reason="pre-release file not 
 
 
 def _source(d, sid):
-    from gedi.epochs import Epochs
+    from gaiabias.epochs import Epochs
     t_yr = d["t_ns"] / 1e9 / 86400 / 365.25 - 7.5
     m = (d["source_id"] == sid) & d["used"] & np.isfinite(d["w"]) & np.isfinite(t_yr)
     return Epochs(t_yr[m], np.radians(d["psi_deg"][m]), d["pf_al"][m]), d["w"][m], d["err"][m], d["transit"][m]
 
 
 def _table():
-    from gedi.dr4_epoch import ccd_table
+    from gaiabias.dr4_epoch import ccd_table
     return ccd_table(DATA)
 
 
 def test_reader_and_single_star_parallax():
-    from gedi.fitting import fit_5par
+    from gaiabias.fitting import fit_5par
     d = _table()
     assert len(np.unique(d["source_id"])) == 12
     ep, w, err, _ = _source(d, 1663617687609809280)          # LSPM J1324+6124, parallax ~10.1 mas
@@ -34,7 +34,7 @@ def test_reader_and_single_star_parallax():
 
 
 def test_ccds_within_a_transit_are_independent():
-    from gedi.fitting import _design_5par, fit_5par
+    from gaiabias.fitting import _design_5par, fit_5par
     d = _table()
     z2 = []
     for sid in (4181040337841125632, 3926186255616949504, 435469040545191680, 1663617687609809280,
@@ -51,7 +51,7 @@ def test_ccds_within_a_transit_are_independent():
 
 
 def test_known_orbits_recovered():
-    from gedi.fitting import fit_orbit_trend
+    from gaiabias.fitting import fit_orbit_trend
     d = _table()
     ep, w, err, _ = _source(d, 4318465066420528000)          # Gaia BH3
     f = fit_orbit_trend(ep, w, err, 0.76, n_trend=0, P_max=2e4)

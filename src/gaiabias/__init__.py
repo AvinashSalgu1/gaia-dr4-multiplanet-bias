@@ -1,4 +1,4 @@
-"""GEDI (Gaia Exoplanet Detection and Inference): how unmodelled companions bias Gaia DR4 planet detection, orbits, occurrence rates and yields."""
+"""gaiabias: how unmodelled companions bias Gaia DR4 planet masses and occurrence rates."""
 
 from .epochs import Epochs
 from .orbits import Companion

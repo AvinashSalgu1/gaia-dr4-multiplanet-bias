@@ -67,7 +67,7 @@ def main():
     p.add_argument("--boot", type=int, default=100)
     a = p.parse_args()
     import step3 as S3
-    from gedi import rates as R_
+    from gaiabias import rates as R_
 
     z, meta, jobs, d = C.load_step3(a.root)
     n_star = meta["n_stars"]

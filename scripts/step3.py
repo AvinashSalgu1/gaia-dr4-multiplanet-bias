@@ -14,7 +14,7 @@ Stages:
             Sec. 4.1 (main sequence, their distance limit), RUWE <= 1.4.
             Downloaded once with astroquery into data/gaia_dr3_250pc/ (skipped
             if already there): the whole sky by default, in 768 HEALPix tiles.
-            See src/gedi/gaia_stars.py.
+            See src/gaiabias/gaia_stars.py.
  2. BUILD   a random subset of those stars; giant planets from the Lammers &
             Winn Eq. 23 occurrence model (CLS-normalised; 0.3-13 M_J, 0.1-30 au)
             under two multiplicity scenarios with the SAME mean number of
@@ -39,7 +39,7 @@ Stages:
             MULTIPLICITY SCAN: occurrence bias and DR4 yield versus the fraction
             of giant hosts with a second giant (0-80%) at the same CLS rate,
             built by reweighting the fitted systems (no new fits; see
-            src/gedi/multiplicity.py). Summary + figures in results/step3_gaia/.
+            src/gaiabias/multiplicity.py). Summary + figures in results/step3_gaia/.
 
 Outputs: results/step3_gaia/summary.txt and the figures results/step3_gaia/*.png.
 """
@@ -88,7 +88,7 @@ def paths(root: Path):
 
 # ============================================================================ build
 def _snr_sum(stars, pl):
-    from gedi.population import planet_snr1
+    from gaiabias.population import planet_snr1
     snr = planet_snr1(stars, pl)
     return snr, np.bincount(pl.star, weights=snr, minlength=len(stars)), np.bincount(pl.star, minlength=len(stars))
 
@@ -96,8 +96,8 @@ def _snr_sum(stars, pl):
 def _draw_injections(stars, rng, target_fits, block=100_000):
     """Single planets, log-uniform in m and P, until `target_fits` pass the cut.
     Hosts drawn proportional to M_star (the occurrence model's stellar-mass scaling)."""
-    from gedi.orbits import draw_ecc_kipping, reflex_a0_mas
-    from gedi.simulate import sigma_al_per_transit
+    from gaiabias.orbits import draw_ecc_kipping, reflex_a0_mas
+    from gaiabias.simulate import sigma_al_per_transit
 
     w = stars.m_star / stars.m_star.sum()
     rows, idx, all_m, all_P = [], [], [], []
@@ -128,14 +128,14 @@ def _draw_injections(stars, rng, target_fits, block=100_000):
 def build(root: Path, n_stars: int, inj_fits: int, seed: int, ruwe_max, stars_override=None,
           sky=("circles", None), variant=(), n_jobs: int = 1):
     """sky = (layout, sky fraction asked for); n_stars <= 0 means every selected star;
-    variant: population variants of gedi.population (coplanar, stable, lowecc)."""
-    from gedi.population import draw_planets, host_fraction_clustered
+    variant: population variants of gaiabias.population (coplanar, stable, lowecc)."""
+    from gaiabias.population import draw_planets, host_fraction_clustered
 
     P = paths(root)
     root.mkdir(parents=True, exist_ok=True)
     t0 = time.perf_counter()
     if stars_override is None:
-        from gedi import gaia_stars as GS
+        from gaiabias import gaia_stars as GS
         stars, info = GS.load_sample(n_stars, seed, ruwe_max, layout=sky[0])
     else:
         stars, info = stars_override
@@ -223,7 +223,7 @@ def built_matches(root: Path, n_stars, inj_fits, seed, ruwe_max, sky=("circles",
 
 # ============================================================================ fit
 def _payloads(root: Path):
-    from gedi.orbits import Companion
+    from gaiabias.orbits import Companion
 
     P = paths(root)
     with np.load(P["pop"]) as f:
@@ -251,8 +251,8 @@ def _payloads(root: Path):
 
 
 def _data(star, comps, rng, dr, synthetic):
-    from gedi import epochs as E
-    from gedi.simulate import Star, sigma_al_per_transit, simulate
+    from gaiabias import epochs as E
+    from gaiabias.simulate import Star, sigma_al_per_transit, simulate
     ep = E.synthetic(n_transits=80 if dr == "dr4" else 45, rng=rng) if synthetic else \
         E.from_gaiamock(star["ra"], star["dec"], dr, rng=rng)
     st = Star(parallax_mas=star["parallax"], m_star_msun=star["m_star"], G_mag=star["G"],
@@ -265,8 +265,8 @@ def _data(star, comps, rng, dr, synthetic):
 
 
 def run_job(payload, which, synthetic=False) -> dict:
-    from gedi.fitting import fit_5par, ruwe_from_chi2
-    from gedi.step2 import analyses as A
+    from gaiabias.fitting import fit_5par, ruwe_from_chi2
+    from gaiabias.step2 import analyses as A
 
     rng = np.random.default_rng(payload["seed"])
     ep, obs, err = _data(payload["star"], payload["comps"], rng, "dr4", synthetic)
@@ -284,7 +284,7 @@ def run_job(payload, which, synthetic=False) -> dict:
 
 
 def fit_columns(which):
-    from gedi.step2 import analyses as A
+    from gaiabias.step2 import analyses as A
     return ["job", "n_transits", "ruwe_dr4", "ruwe_dr3"] + [c for a in which for c in A.cols(a, "w")]
 
 
@@ -351,7 +351,7 @@ def merge_parts(root: Path):
 
 # ============================================================================ analyse
 def load_fits(root: Path):
-    from gedi.step2 import analyses as A
+    from gaiabias.step2 import analyses as A
     with open(paths(root)["fits"]) as f:
         rows = list(csv.DictReader(f))
     text = A.TEXT_FIELDS
@@ -366,7 +366,7 @@ def load_fits(root: Path):
 
 def reported_planets(d, analysis):
     """Per job: list of (fitted P [yr], m [M_J], significance) of every planet the analysis reports."""
-    from gedi.step2.outcomes import reported
+    from gaiabias.step2.outcomes import reported
     rep = reported(d, analysis, "w")
     n = len(d["job"])
     out = [[] for _ in range(n)]
@@ -420,7 +420,7 @@ def injection_response(z, jobs, rep_of):
 
 def eta_fitted(inj, w_all=None):
     """Completeness per coarse bin with detections at FITTED parameters (optionally bootstrap-weighted)."""
-    from gedi import rates as R
+    from gaiabias import rates as R
     w_det = None if w_all is None else w_all[inj["idx"]]
     return R.completeness_fitted(inj["m_all"], inj["P_all"], None, inj["f_m"], inj["f_P"], M_EDGES, P_EDGES,
                                  w_inj=None if w_all is None else (w_all, w_det))
@@ -428,7 +428,7 @@ def eta_fitted(inj, w_all=None):
 
 def analyse_one(z, meta, jobs, d, analysis):
     """Rates and diagnostics for one analysis, both scenarios; also per-host tables for the multiplicity scan."""
-    from gedi import rates as R
+    from gaiabias import rates as R
 
     n_star = meta["n_stars"]
     pos = {j: k for k, j in enumerate(d["job"])}
@@ -560,7 +560,7 @@ def summary_lines(meta, res, ruwe, which_done):
           "planet, poorly measured) or 'spurious' (no real planet resembles it). Power laws are fitted by forward",
           "modelling through the injection response (true -> fitted parameters).", ""]
     if meta.get("variant"):
-        L.append(f"POPULATION VARIANT: {', '.join(meta['variant'])} (see src/gedi/population.py)")
+        L.append(f"POPULATION VARIANT: {', '.join(meta['variant'])} (see src/gaiabias/population.py)")
         for scen, dd in meta["scen"].items():
             st = dd.get("stability") or {}
             if st:
@@ -651,8 +651,8 @@ def sky_fraction(meta) -> float:
 def scan_multiplicity(res, meta, f_grid=SCAN_F, n_boot=SCAN_BOOT, seed=11):
     """Occurrence bias and yield vs multiplicity, by reweighting the fitted hosts (no new fits).
     Returns {method: dict of arrays over f (nominal, and bootstrap 16/84 percentiles)}."""
-    from gedi import multiplicity as MU
-    from gedi import rates as R
+    from gaiabias import multiplicity as MU
+    from gaiabias import rates as R
 
     n_star = meta["n_stars"]
     n_full = meta["n_selected"] / sky_fraction(meta)        # stars passing the cuts, whole sky
@@ -832,7 +832,7 @@ def _setup():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from gedi import plotstyle as ps
+    from gaiabias import plotstyle as ps
     ps.apply()
     return plt, ps
 
@@ -1078,7 +1078,7 @@ def main():
         return
     which = FITTED + (["dr3"] if a.with_dr3_pipeline else [])
     if not a.analyse:
-        from gedi import gaia_stars as GS
+        from gaiabias import gaia_stars as GS
         if not GS.have_stars(layout, a.sky_fraction):
             print(f"1. downloading Gaia DR3 stars (once; {100 * a.sky_fraction:.0f}% of the sky in "
                   f"{layout}, resumable) ...", flush=True)

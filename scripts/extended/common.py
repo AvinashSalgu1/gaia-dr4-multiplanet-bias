@@ -47,7 +47,7 @@ def setup_plots():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from gedi import plotstyle as ps
+    from gaiabias import plotstyle as ps
     ps.apply()
     return plt, ps
 

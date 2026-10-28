@@ -41,11 +41,11 @@ SNR_FIT = 0.3
 
 def one(args):
     m_star, dist, m, a_au, k, seed, synthetic = args
-    from gedi import epochs as E
-    from gedi import population as POP
-    from gedi.fitting import fit_5par, fit_orbit_trend, fit_trend_only
-    from gedi.orbits import Companion, draw_ecc_kipping, reflex_a0_mas
-    from gedi.simulate import Star, sigma_al_per_transit, simulate
+    from gaiabias import epochs as E
+    from gaiabias import population as POP
+    from gaiabias.fitting import fit_5par, fit_orbit_trend, fit_trend_only
+    from gaiabias.orbits import Companion, draw_ecc_kipping, reflex_a0_mas
+    from gaiabias.simulate import Star, sigma_al_per_transit, simulate
 
     rng = np.random.default_rng([seed, int(1000 * m_star), int(dist), int(1000 * m), int(1000 * a_au), k])
     G = float(POP.abs_G(np.array([m_star]))[0]) + 5 * np.log10(dist / 10.0)
@@ -140,7 +140,7 @@ def main():
     C.write_summary(out / "summary.txt", L)
 
     plt, ps = C.setup_plots()
-    from gedi import population as POP
+    from gaiabias import population as POP
     fig, axes = plt.subplots(2, 3, figsize=(16, 9.5), sharex=True, sharey=True, constrained_layout=True)
     for k, ((ms, d), F) in enumerate(frac.items()):
         ax = axes[k // 3, k % 3]

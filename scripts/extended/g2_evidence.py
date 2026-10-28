@@ -61,8 +61,8 @@ def log_evidence_linear(X, y, err, s):
 
 
 def design(ep, model, nl):
-    from gedi.fitting import _design_5par, _trend_columns
-    from gedi.orbits import orbit_XY
+    from gaiabias.fitting import _design_5par, _trend_columns
+    from gaiabias.orbits import orbit_XY
     cols = [_design_5par(ep)] + _trend_columns(ep, TREND[model])
     s, c = np.sin(ep.psi), np.cos(ep.psi)
     for k in range(NL[model]):
@@ -110,13 +110,13 @@ def evidence(ep, y, err, model, scale, nlive, rng):
 
 def select_seeds(per_group):
     """Seeds from the step 2 population for the four groups (system draws only, no epochs needed)."""
-    from gedi.step2.sim import draw_system, population_seeds
-    from gedi.simulate import snr1
+    from gaiabias.step2.sim import draw_system, population_seeds
+    from gaiabias.simulate import snr1
     groups = {"weak": [], "eccentric": [], "near 2:1": [], "random": []}
     for s in population_seeds(20000):
         sy = draw_system(np.random.default_rng(s))
         t, c = sy["target"], sy["comp"]
-        from gedi.orbits import reflex_a0_mas
+        from gaiabias.orbits import reflex_a0_mas
         snr_t = snr1(reflex_a0_mas(sy["m_star"], t.m_mjup, t.P_days, sy["parallax"]), sy["G"])
         pr = max(t.P_days, c.P_days) / min(t.P_days, c.P_days)
         for g, ok in (("weak", snr_t < 2.5), ("eccentric", max(t.ecc, c.ecc) > 0.5),
@@ -133,7 +133,7 @@ def run_one(group, seed, scale, nlive, synthetic):
     import sys
     sys.path.insert(0, str(C.REPO / "scripts" / "extended"))
     from g2_noise_robustness import make_data
-    from gedi.step2 import analyses as A
+    from gaiabias.step2 import analyses as A
     s, ep, single, both, noise = make_data(seed, "baseline", synthetic)
     y, err = both.obs + noise, both.err
     fit = A.run(ep, y, err, s["m_star"], "w", set(A.FITTED))

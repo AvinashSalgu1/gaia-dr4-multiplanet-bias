@@ -47,8 +47,8 @@ def draw_system(rng: np.random.Generator):
     SNR_1 and P are drawn log-uniform so every part of the plane is sampled;
     the planet mass is then whatever is needed at the drawn distance.
     """
-    from gedi.orbits import companion_mass_from_a0
-    from gedi.simulate import sigma_al_per_transit
+    from gaiabias.orbits import companion_mass_from_a0
+    from gaiabias.simulate import sigma_al_per_transit
 
     while True:
         snr1 = 10 ** rng.uniform(np.log10(0.1), np.log10(5.0))
@@ -70,10 +70,10 @@ def draw_system(rng: np.random.Generator):
 
 # ----------------------------------------------------------------------------- one run
 def run_one(seed: int) -> dict:
-    from gedi import epochs as E
-    from gedi.fitting import chi2_at, fit_one_companion, fit_5par, lammers_winn_detected
-    from gedi.orbits import Companion
-    from gedi.simulate import Star, simulate
+    from gaiabias import epochs as E
+    from gaiabias.fitting import chi2_at, fit_one_companion, fit_5par, lammers_winn_detected
+    from gaiabias.orbits import Companion
+    from gaiabias.simulate import Star, simulate
 
     rng = np.random.default_rng(seed)
     s = draw_system(rng)
@@ -260,7 +260,7 @@ def plot(d, det, x, snr):
     ax[0, 0].legend(loc="upper left")
 
     # (b) p_det vs orbital period (years) in SNR1 bins
-    from gedi import plotstyle as ps
+    from gaiabias import plotstyle as ps
     P_yr = x * T_DR4_DAYS / 365.25
     pe = np.geomspace(50 / 365.25, 3 * T_DR4_DAYS / 365.25, 16)
     pcen = np.sqrt(pe[1:] * pe[:-1])

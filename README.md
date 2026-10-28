@@ -1,6 +1,6 @@
-# GEDI: Gaia Exoplanet Detection and Inference
+# gaia-dr4-multiplanet-bias
 
-GEDI (formerly gaia-dr4-multiplanet-bias) simulates Gaia DR4 epoch astrometry for stars with **more than one giant
+Simulations of Gaia DR4 epoch astrometry for stars with **more than one giant
 planet**, to measure how unmodelled companions bias:
 
 - planet **detection** and the **fitted orbits** (period, mass, eccentricity);
@@ -69,8 +69,8 @@ cd ..
 ### 1b. This package
 
 ```bash
-git clone <this repository> gedi
-cd gedi
+git clone <this repository> gaia-dr4-multiplanet-bias
+cd gaia-dr4-multiplanet-bias
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 pip install -e .
@@ -268,7 +268,7 @@ model, significance < 5, period > 0.7 × time span, eccentricity > 0.5, Δχ² n
 threshold, period error, RUWE) against the truth. Part 2 estimates RV
 semi-amplitudes, V magnitudes and the number of HARPS or FEROS epochs needed to
 confirm each DR4 planet, reject spurious ones, and find hidden giants (instrument
-assumptions in `src/gedi/rv.py`).
+assumptions in `src/gaiabias/rv.py`).
 
 **Expected:** `results/step4_allsky/summary.txt`, `planets.csv` and two figures.
 
@@ -446,14 +446,14 @@ of HD 114762, Gaia-4 and Gaia BH3 recovered) and
 
 | What | Where |
 |---|---|
-| Occurrence model, multiplicity scenarios and population variants | `src/gedi/population.py` |
-| Noise model and observing pattern | `src/gedi/simulate.py`, `src/gedi/epochs.py` |
-| Detection rule and orbit fits | `src/gedi/fitting.py`, `src/gedi/step2/outcomes.py` |
-| Star selection and download | `src/gedi/gaia_stars.py` |
-| Rate estimators | `src/gedi/rates.py` |
+| Occurrence model, multiplicity scenarios and population variants | `src/gaiabias/population.py` |
+| Noise model and observing pattern | `src/gaiabias/simulate.py`, `src/gaiabias/epochs.py` |
+| Detection rule and orbit fits | `src/gaiabias/fitting.py`, `src/gaiabias/step2/outcomes.py` |
+| Star selection and download | `src/gaiabias/gaia_stars.py` |
+| Rate estimators | `src/gaiabias/rates.py` |
 | Multiplicity scan grid | `SCAN_F` in `scripts/step3.py` |
 | Warning flags | `FLAGS` in `scripts/step4.py` |
-| Radial-velocity instruments and jitter | `src/gedi/rv.py` |
+| Radial-velocity instruments and jitter | `src/gaiabias/rv.py` |
 
 Every script prints its options with `--help`.
 
@@ -462,7 +462,7 @@ Every script prints its options with `--help`.
 ## 5. Repository layout
 
 ```
-src/gedi/
+src/gaiabias/
   orbits.py            Keplerian orbits, Thiele-Innes <-> Campbell elements, mass from a0, stability
   simulate.py          epoch astrometry for a star with N companions, Gaia noise model
   epochs.py            Gaia observation times and scan angles (via gaiamock)

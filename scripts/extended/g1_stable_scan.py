@@ -36,7 +36,7 @@ def bad_stars(mask):
             if r["status"] == "unstable":
                 out[r["scenario"]].add(int(r["star"]))
     else:
-        from gedi.orbits import mutual_inclination
+        from gaiabias.orbits import mutual_inclination
         for r in csv.DictReader(open(C.DATA / "pairs_all.csv")):
             mi = np.degrees(mutual_inclination(float(r["inc1"]), float(r["Omega1"]), float(r["inc2"]),
                                                float(r["Omega2"])))
@@ -47,7 +47,7 @@ def bad_stars(mask):
 
 def patched_weights(keep):
     """host_weights_by_mass with the multiplicity distribution built from kept hosts only."""
-    from gedi import multiplicity as MU
+    from gaiabias import multiplicity as MU
 
     def hw(pool, f, mbin_host, k_min_pool=10):
         mu = MU.mu_for(f)
@@ -78,7 +78,7 @@ def main():
     p.add_argument("--boot", type=int, default=20)
     a = p.parse_args()
     import step3 as S3
-    from gedi import multiplicity as MU
+    from gaiabias import multiplicity as MU
 
     z, meta, jobs, d = C.load_step3(a.root)
     res = {an: S3.analyse_one(z, meta, jobs, d, an) for an in S3.SCAN_METHODS}

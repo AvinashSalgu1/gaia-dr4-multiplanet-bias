@@ -28,7 +28,7 @@ GROUPS = ["weak", "eccentric", "near 2:1", "random"]
 
 def judge_with_choice(d, choice):
     """Step 2 outcome flags when the adopted model (index into MODELS) is `choice` on the data with companion."""
-    from gedi.step2 import outcomes as O
+    from gaiabias.step2 import outcomes as O
     original = O.bic_choice
 
     def forced(dd, v):
@@ -50,7 +50,7 @@ def outcome_shares(o, sel):
 
 
 def main():
-    from gedi.step2 import population as POP
+    from gaiabias.step2 import population as POP
     if not POP.OUT_CSV.exists():
         raise SystemExit(f"{POP.OUT_CSV} not found: this needs the machine where step 2 was run")
     full = POP.load()

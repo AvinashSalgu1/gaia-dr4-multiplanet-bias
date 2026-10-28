@@ -60,7 +60,7 @@ def find_input():
 
 
 def per_source(d, s):
-    from gedi.epochs import Epochs
+    from gaiabias.epochs import Epochs
     t_yr = d["t_ns"] / 1e9 / 86400 / 365.25 - 7.5        # ns since J2010.0 (TCB) -> years from J2017.5
     m = (d["source_id"] == s) & d["used"] & np.isfinite(d["w"]) & np.isfinite(t_yr)
     return Epochs(t_yr[m], np.radians(d["psi_deg"][m]), d["pf_al"][m]), d["w"][m], d["err"][m], \
@@ -69,7 +69,7 @@ def per_source(d, s):
 
 def transit_test(ep, w, err, tr):
     """rms of standardised transit-mean residuals after a 5-parameter fit, and within-transit chi2/dof."""
-    from gedi.fitting import _design_5par, fit_5par
+    from gaiabias.fitting import _design_5par, fit_5par
     chi2, mu = fit_5par(ep, w, err)
     r = w - _design_5par(ep) @ mu
     z, within, nccd = [], [], []
@@ -88,9 +88,9 @@ def transit_test(ep, w, err, tr):
 
 
 def main():
-    from gedi.dr4_epoch import ccd_table
-    from gedi.fitting import fit_orbit_trend, fit_two_planets
-    from gedi.simulate import _G_VALS, _SIGMA_CCD
+    from gaiabias.dr4_epoch import ccd_table
+    from gaiabias.fitting import fit_orbit_trend, fit_two_planets
+    from gaiabias.simulate import _G_VALS, _SIGMA_CCD
 
     path = find_input()
     d = ccd_table(path)
@@ -149,8 +149,8 @@ def plot(rows, orbit_rows, G_vals, sig_ccd):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from gedi import plotstyle as ps
-    from gedi.fitting import _design_9par
+    from gaiabias import plotstyle as ps
+    from gaiabias.fitting import _design_9par
 
     ps.apply()
     fig, ax = plt.subplots(1, 3, figsize=(17, 4.8), constrained_layout=True)

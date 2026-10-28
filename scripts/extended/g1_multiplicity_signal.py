@@ -37,8 +37,8 @@ def main():
     p.add_argument("--boot", type=int, default=200)
     a = p.parse_args()
     import step3 as S3
-    from gedi import multiplicity as MU
-    from gedi.step2.outcomes import bic_choice
+    from gaiabias import multiplicity as MU
+    from gaiabias.step2.outcomes import bic_choice
 
     z, meta, jobs, d = C.load_step3(a.root)
     out = C.out_dir("multiplicity_signal")

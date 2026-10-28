@@ -1,4 +1,4 @@
-# Core (pure numpy/scipy parts of gedi)
+# Core (pure numpy/scipy parts of gaiabias)
 numpy>=1.26
 scipy>=1.11
 matplotlib>=3.8

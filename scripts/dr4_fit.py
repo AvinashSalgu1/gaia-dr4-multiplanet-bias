@@ -3,7 +3,7 @@
     python scripts/dr4_fit.py FILE [FILE ...] [--masses masses.csv] [--part k/n] [-j N] [--out DIR]
 
 FILE: epoch-astrometry files with the DR4 data-model columns (the pre-release VOTable now; the
-bulk DR4 files once released, see src/gedi/dr4.py). Every source is reduced to per-transit
+bulk DR4 files once released, see src/gaiabias/dr4.py). Every source is reduced to per-transit
 along-scan positions and fitted with the seven models of step 2 (no planet, acceleration, jerk,
 one orbit, orbit + acceleration, orbit + jerk, two orbits); the lowest BIC is adopted and its
 planets are reported with the project's detection test, as in the simulations.
@@ -35,7 +35,7 @@ def host_masses(sids, masses_csv=None):
     if masses_csv:
         for r in csv.DictReader(open(masses_csv)):
             out[int(r["source_id"])] = float(r["m_star"])
-    from gedi import gaia_stars as GS
+    from gaiabias import gaia_stars as GS
     p = GS.merged_path("tiles")
     if p.exists():
         sel, _ = GS.select(dict(np.load(p)), ruwe_max=None)
@@ -48,9 +48,9 @@ def host_masses(sids, masses_csv=None):
 
 def one(args):
     sid, ep, y, err, ncc, G, m_star = args
-    from gedi import dr4
-    from gedi.fitting import fit_5par
-    from gedi.gaia_stars import mass_from_MG
+    from gaiabias import dr4
+    from gaiabias.fitting import fit_5par
+    from gaiabias.gaia_stars import mass_from_MG
     chi2_5, mu = fit_5par(ep, y, err)
     plx = mu[4]
     source_of_mass = "given"
@@ -73,7 +73,7 @@ def main():
     p.add_argument("--out", type=Path, default=ROOT / "results" / "dr4")
     a = p.parse_args()
     from joblib import Parallel, delayed
-    from gedi import dr4
+    from gaiabias import dr4
     a.out.mkdir(parents=True, exist_ok=True)
     k, n = (int(x) for x in a.part.split("/")) if a.part else (0, 1)
     path = a.out / ("fits.csv" if n == 1 else f"fits.part{k}of{n}.csv")

@@ -6,7 +6,7 @@ is skipped. To run it again, delete that folder or add a new job file with a new
 
 ```toml
 name      = "0002-step3-all-stars"     # folder name under results/
-code_ref  = "main"                     # branch, tag or commit of gedi
+code_ref  = "main"                     # branch, tag or commit of gaia-dr4-multiplanet-bias
 cores     = 64                         # at most MAX_CORES (runner/config.sh)
 max_hours = 100                        # stopped after this (optional, default 100; GitHub's own limit is 5 days)
 command   = "python scripts/step3.py --jobs {cores}"   # runs in the code folder; {cores} is replaced

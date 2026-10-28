@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gedi"
+name = "gaiabias"
 version = "0.3.0"
-description = "GEDI (Gaia Exoplanet Detection and Inference): bias in Gaia DR4 planet detection, orbits and occurrence rates from unmodelled companions"
+description = "Bias in Gaia DR4 planet characterisation and occurrence rates from unmodelled companions"
 requires-python = ">=3.10"
 dependencies = ["numpy", "scipy"]
 

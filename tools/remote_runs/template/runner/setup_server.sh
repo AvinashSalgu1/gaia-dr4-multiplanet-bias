@@ -46,7 +46,7 @@ code)
         url=https://github.com/$CODE_REPO.git
     fi
     [ -d "$DEV_DIR/.git" ] || git clone "$url" "$DEV_DIR"
-    pip install -q --no-deps -e "$DEV_DIR"      # makes `import gedi` work (editable: follows checkouts)
+    pip install -q --no-deps -e "$DEV_DIR"      # makes `import gaiabias` work (editable: follows checkouts)
     [ -d "$GAIAMOCK_DIR/.git" ] || git clone https://github.com/kareemelbadry/gaiamock "$GAIAMOCK_DIR"
     (cd "$GAIAMOCK_DIR" && gcc -O2 -shared -fPIC -o kepler_solve_astrometry.so kepler_solve_astrometry.c \
         -I"$CONDA_PREFIX/include" -L"$CONDA_PREFIX/lib" -Wl,-rpath,"$CONDA_PREFIX/lib" -lgsl -lgslcblas -lm)
