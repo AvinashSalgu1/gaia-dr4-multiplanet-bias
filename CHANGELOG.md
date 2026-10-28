@@ -8,6 +8,8 @@ the default stellar sample and output folders changed (see below), so 0.2.0 numb
 reproduced only with `--circles`.
 
 ### Changed
+- The project is renamed GEDI (Gaia Exoplanet Detection and Inference): the Python package `gaiabias` is
+  now `gedi` (`import gedi`; `pip install -e .` again after updating), and the repository is now `gedi`.
 - Step 3 uses the whole sky within 250 pc by default: the Gaia DR3 stars are downloaded in 768
   HEALPix level-3 tiles, each queried as a range of Gaia source_ids, and every selected star is
   fitted (`--stars` default 0 = all; 2,311,408 stars). Results go to `results/step3_allsky/`.

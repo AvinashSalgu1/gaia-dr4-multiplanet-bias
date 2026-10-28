@@ -2,12 +2,12 @@
 import numpy as np
 import pytest
 
-from gaiabias import epochs as E
-from gaiabias.fitting import chi2_at, fit_5par
-from gaiabias.orbits import (Companion, campbell_from_thiele_innes, companion_mass_from_a0,
+from gedi import epochs as E
+from gedi.fitting import chi2_at, fit_5par
+from gedi.orbits import (Companion, campbell_from_thiele_innes, companion_mass_from_a0,
                              reflex_a0_mas, reflex_along_scan, relative_semimajor_axis_au,
                              sky_offsets, solve_kepler, thiele_innes)
-from gaiabias.simulate import Star, sigma_al_per_transit, simulate
+from gedi.simulate import Star, sigma_al_per_transit, simulate
 
 RNG = np.random.default_rng(1)
 
@@ -102,7 +102,7 @@ def _obs_err(sim):
 
 
 def test_hill_stability():
-    from gaiabias.orbits import hill_stable
+    from gedi.orbits import hill_stable
     # L&W Sec. 6.2: 5 M_J at 3 au around 0.8 Msun needs an outer 5 M_J at >~5.3 au
     P = lambda a_au: 365.25 * np.sqrt(a_au**3 / 0.8)
     inner = Companion(5.0, P(3.0))
@@ -113,7 +113,7 @@ def test_hill_stability():
 
 
 def test_f2_good_fit_near_zero():
-    from gaiabias.fitting import f2_statistic
+    from gedi.fitting import f2_statistic
     n = 80
     chis = RNG.chisquare(n - 12, 4000)
     f2 = np.array([f2_statistic(c, n) for c in chis])
@@ -125,7 +125,7 @@ def test_f2_good_fit_near_zero():
 
 def test_orbit_plus_acceleration_recovered():
     """Noise-free orbit + acceleration: orbit+trend fit recovers P; orbit-only can't fit it."""
-    from gaiabias.fitting import fit_orbit_trend
+    from gedi.fitting import fit_orbit_trend
     rng = np.random.default_rng(5)
     ep = E.synthetic(n_transits=80, rng=rng)
     star = Star(parallax_mas=25.0, m_star_msun=0.9, G_mag=12.0, pmra=10.0, pmdec=-5.0)
@@ -143,7 +143,7 @@ def test_orbit_plus_acceleration_recovered():
 
 def test_orbit_only_optimiser_finds_true_minimum():
     """With noise, the numpy optimiser should reach at least the chi2 of the true orbit."""
-    from gaiabias.fitting import chi2_at, fit_orbit_trend
+    from gedi.fitting import chi2_at, fit_orbit_trend
     rng = np.random.default_rng(8)
     worse = 0
     for _ in range(8):
@@ -160,7 +160,7 @@ def test_orbit_only_optimiser_finds_true_minimum():
 
 
 def test_mutual_inclination_geometry():
-    from gaiabias.orbits import mutual_inclination, orientation_relative_to
+    from gedi.orbits import mutual_inclination, orientation_relative_to
     rng = np.random.default_rng(3)
     for _ in range(50):
         i0, O0 = np.arccos(rng.uniform(-1, 1)), rng.uniform(0, 2 * np.pi)
@@ -173,14 +173,14 @@ def test_mutual_inclination_geometry():
 
 
 def test_Tp_for_mean_anomaly():
-    from gaiabias.orbits import Tp_for_mean_anomaly
+    from gedi.orbits import Tp_for_mean_anomaly
     P, t, M = 900.0, -56.875, 1.2
     Tp = Tp_for_mean_anomaly(M, t, P)
     assert (2 * np.pi * (t - Tp) / P) == pytest.approx(M)
 
 
 def test_two_planet_fit_recovers_both():
-    from gaiabias.fitting import fit_two_planets
+    from gedi.fitting import fit_two_planets
     rng = np.random.default_rng(5)
     ep = E.synthetic(n_transits=90, rng=rng)
     star = Star(parallax_mas=40.0, m_star_msun=0.9, G_mag=11.0)
@@ -196,7 +196,7 @@ def test_two_planet_fit_recovers_both():
 
 
 def test_two_planet_fit_single_planet_gives_small_gain():
-    from gaiabias.fitting import fit_two_planets
+    from gedi.fitting import fit_two_planets
     rng = np.random.default_rng(6)
     ep = E.synthetic(n_transits=90, rng=rng)
     star = Star(parallax_mas=40.0, m_star_msun=0.9, G_mag=11.0)
@@ -209,7 +209,7 @@ def test_two_planet_fit_single_planet_gives_small_gain():
 
 def test_step2_outcome_rules():
     """Target / companion / wrong classification and the two-planet 'if justified' rule."""
-    from gaiabias.step2.outcomes import judge
+    from gedi.step2.outcomes import judge
     nan = np.nan
     # system 0: target found correctly; 1: wrong (mass 50% off); 2: companion found; 3: nothing
     d = dict(P_t=np.array([500.0] * 4), m_t=np.array([3.0] * 4), P_c=np.array([3000.0] * 4),
@@ -239,7 +239,7 @@ def test_step2_outcome_rules():
 
 
 def test_bic_choice():
-    from gaiabias.step2.outcomes import bic_choice
+    from gedi.step2.outcomes import bic_choice
     n = np.array([80.0, 80.0, 80.0])          # ln 80 = 4.38: each extra parameter costs 4.38 in chi2
     d = {"n_transits": n,
          "accel_w_c5": np.array([1000.0, 100.0, 400.0]), "accel_w_c7": np.array([990.0, 95.0, 300.0]),
@@ -252,7 +252,7 @@ def test_bic_choice():
 
 
 def test_ruwe_from_chi2_is_one_for_noise():
-    from gaiabias.fitting import fit_5par, ruwe_from_chi2
+    from gedi.fitting import fit_5par, ruwe_from_chi2
     rng = np.random.default_rng(9)
     vals = []
     for _ in range(200):
@@ -265,7 +265,7 @@ def test_ruwe_from_chi2_is_one_for_noise():
 
 def test_significance_matches_monte_carlo():
     """Linearised a0 error vs the scatter of a0 over noise (robust width; a few blended fits excluded)."""
-    from gaiabias.fitting import fit_orbit_trend
+    from gedi.fitting import fit_orbit_trend
     rng = np.random.default_rng(4)
     ep = E.synthetic(n_transits=80, rng=rng)
     star = Star(parallax_mas=30.0, m_star_msun=0.9, G_mag=12.0)

@@ -15,7 +15,7 @@ model adds agis_source_excess_noise in quadrature (excess=True); orbit fits use 
 errors (excess=False), since the excess noise belongs to the single-star solution.
 
 Times are TCB nanoseconds since J2010.0 plus the barycentric correction; they are returned in
-years from the DR4 reference epoch J2017.5, the convention of gaiabias.epochs.
+years from the DR4 reference epoch J2017.5, the convention of gedi.epochs.
 """
 from __future__ import annotations
 

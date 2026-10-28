@@ -25,7 +25,7 @@ def test_linear_evidence_matches_numerical_integral():
 
 def test_evidence_prefers_true_number_of_orbits_on_clear_signal():
     import g2_evidence as E
-    from gaiabias import epochs as Ep
+    from gedi import epochs as Ep
     rng = np.random.default_rng(3)
     ep = Ep.synthetic(80, rng=rng)
     nl = [700.0, 1.0, 0.1]
@@ -82,5 +82,5 @@ def test_photocentre_factor():
     f = M.photocentre_factor(np.array([0.2, 0.8, 1.0]), 1.0)
     assert f[0] > 0.95 and 0.3 < f[1] < 0.8 and abs(f[2]) < 1e-9     # twins: photocentre does not move
     m = M.effective_mass_mj(1.0, 300.0, 500.0, 0.5)
-    from gaiabias.orbits import reflex_a0_mas
+    from gedi.orbits import reflex_a0_mas
     assert abs(reflex_a0_mas(1.0, m, 500.0, 1.0) / reflex_a0_mas(1.0, 300.0, 500.0, 1.0) - 0.5) < 1e-6

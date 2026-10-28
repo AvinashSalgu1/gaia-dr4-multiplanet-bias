@@ -3,7 +3,7 @@
 Search order for the gaiamock directory:
   1. the GAIAMOCK_DIR environment variable;
   2. ../gaiamock next to this repository (the recommended layout:
-     <parent>/gaia-dr4-multiplanet-bias and <parent>/gaiamock).
+     <parent>/gedi and <parent>/gaiamock).
 """
 from __future__ import annotations
 

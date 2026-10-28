@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from gaiabias import population as P
-from gaiabias import rates as R
-from gaiabias.orbits import hill_stable
+from gedi import population as P
+from gedi import rates as R
+from gedi.orbits import hill_stable
 
 
 def test_occurrence_matches_cls():
@@ -110,8 +110,8 @@ def test_binned_rate_is_unbiased():
 
 
 def test_deep_sample_reference_planet_at_threshold():
-    from gaiabias.orbits import reflex_a0_mas
-    from gaiabias.simulate import sigma_al_per_transit
+    from gedi.orbits import reflex_a0_mas
+    from gedi.simulate import sigma_al_per_transit
     for m in (0.35, 0.8, 1.3):
         r = float(P.r_ref_pc(m)[0])
         G = P.abs_G(m) + 5 * np.log10(r / 10)
@@ -123,7 +123,7 @@ def test_deep_sample_reference_planet_at_threshold():
 
 def test_gaia_selection_cuts():
     """L&W main-sequence and distance cuts, 250 pc, RUWE and mass assignment on a toy table."""
-    from gaiabias import gaia_stars as GS
+    from gedi import gaia_stars as GS
     # star 0: Sun-like at 50 pc, kept; 1: too red for the main sequence; 2: RUWE 2; 3: M_G 13 (too faint)
     plx = np.array([20.0, 20.0, 20.0, 20.0])
     MG = np.array([4.7, 4.7, 4.7, 13.0])
@@ -151,7 +151,7 @@ def test_lw_distance_limit_peaks_at_MG_2p8():
 def test_gaia_sky_tiles_cover_the_sky_by_source_id():
     """Whole-sky layout: 768 HEALPix level-3 tiles as source_id ranges that tile the id space,
     match the HEALPix pixel of the position, and give a random-order subset for any sky fraction."""
-    from gaiabias import gaia_stars as GS
+    from gedi import gaia_stars as GS
     ranges = [GS.tile_source_id_range(p) for p in range(GS.N_TILES)]
     assert ranges[0][0] == 0 and all(a[1] == b[0] for a, b in zip(ranges, ranges[1:]))
     assert ranges[-1][1] == 12 * 4 ** 12 * 2 ** 35            # every level-12 pixel, nothing beyond
@@ -173,7 +173,7 @@ def test_gaia_sky_tiles_cover_the_sky_by_source_id():
 
 def test_gaia_download_queries_and_columns():
     """Both archives' queries format, and archive answers map to the Gaia column names whatever the case."""
-    from gaiabias import gaia_stars as GS
+    from gedi import gaia_stars as GS
     for m in GS.MIRRORS.values():
         q = m["query"].format(ra0="12.5", dec0="-33.1", r="3", plx_min="4.000000")
         assert "CIRCLE('ICRS', 12.5, -33.1, 3)" in q and "4.000000" in q and "{" not in q
@@ -212,7 +212,7 @@ def _toy_survey(rng, m, P):
 def test_migration_aware_rates_close():
     """Counting detections at FITTED values with completeness at TRUE values is biased; the fitted-space
     completeness and the forward-modelled power law recover the truth."""
-    from gaiabias import rates as R
+    from gedi import rates as R
     rng = np.random.default_rng(5)
     mE, pE = np.array([0.3, 1.0, 3.0, 13.0]), np.array([0.1, 0.3, 1.0, 2.0, 4.0, 8.0])
     mT, pT = np.geomspace(0.3, 13, 7), np.r_[0.05, np.geomspace(0.1, 8, 9), 16.0]
@@ -246,7 +246,7 @@ def test_migration_aware_rates_close():
 
 def test_multiplicity_reweighting():
     """Zero-truncated Poisson multiplicity: f <-> mu, and host weights reproduce the requested f."""
-    from gaiabias import multiplicity as MU
+    from gedi import multiplicity as MU
     for f in (0.0, 0.12, 0.59, 0.8):
         assert MU.f_multi(MU.mu_for(f)) == pytest.approx(f, abs=1e-6) if f > 0 else MU.mu_for(f) < 1e-6
     rng = np.random.default_rng(0)
@@ -261,7 +261,7 @@ def test_multiplicity_reweighting():
 
 def test_rv_helpers():
     """Jupiter's K on the Sun, V from G, precision and epoch rules behave as documented."""
-    from gaiabias import rv as RV
+    from gedi import rv as RV
     assert RV.semi_amplitude(1.0, 11.86, 1.0) == pytest.approx(12.5, rel=0.02)    # Jupiter: 12.5 m/s
     assert RV.v_mag(10.0, 0.82) == pytest.approx(10.17, abs=0.03)                # Sun-like colour: V - G ~ 0.17
     s8, s12 = RV.rv_precision(8.0, 1.0), RV.rv_precision(12.0, 1.0)
@@ -276,7 +276,7 @@ def test_rv_helpers():
 def test_population_variants():
     """Variants change only multi-planet systems: near-coplanar orbits, low eccentricities; unknown names fail;
     the default draws are unchanged by the refactor (same rng sequence)."""
-    from gaiabias.orbits import mutual_inclination
+    from gedi.orbits import mutual_inclination
     st = P.draw_stars(8_000, np.random.default_rng(6))
     base = P.draw_planets(st, np.random.default_rng(7), "clustered")
     again = P.draw_planets(st, np.random.default_rng(7), "clustered", variant=())

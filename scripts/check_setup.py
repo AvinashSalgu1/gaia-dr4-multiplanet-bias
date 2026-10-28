@@ -12,11 +12,11 @@ import time
 
 import numpy as np
 
-from gaiabias import epochs as E
-from gaiabias import gaiamock_bridge as gb
-from gaiabias.fitting import fit_one_companion, lammers_winn_detected
-from gaiabias.orbits import Companion
-from gaiabias.simulate import Star, simulate, snr1
+from gedi import epochs as E
+from gedi import gaiamock_bridge as gb
+from gedi.fitting import fit_one_companion, lammers_winn_detected
+from gedi.orbits import Companion
+from gedi.simulate import Star, simulate, snr1
 
 
 def main():

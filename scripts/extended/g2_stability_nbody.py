@@ -79,7 +79,7 @@ def integrate(row, n_orbits):
 def run_all(n_orbits, jobs, quick=False):
     """All neighbouring pairs, resumable; one row per pair with scenario, star and status."""
     from joblib import Parallel, delayed
-    from gaiabias.orbits import mutual_inclination
+    from gedi.orbits import mutual_inclination
     out = C.out_dir("stability_all_quick" if quick else "stability_all")
     pairs = list(csv.DictReader(open(C.DATA / "pairs_all.csv")))
     for i, r in enumerate(pairs):
@@ -156,7 +156,7 @@ def main():
             w = csv.writer(f)
             w.writerow(["group", "scenario", "hill_ratio", "period_ratio", "e1", "e2", "mutual_inc_deg", "status",
                         "megno", "orbits_done"])
-            from gaiabias.orbits import mutual_inclination
+            from gedi.orbits import mutual_inclination
             for r, (st, mg, nd) in zip(pairs, res):
                 mi = np.degrees(mutual_inclination(float(r["inc1"]), float(r["Omega1"]), float(r["inc2"]),
                                                    float(r["Omega2"])))

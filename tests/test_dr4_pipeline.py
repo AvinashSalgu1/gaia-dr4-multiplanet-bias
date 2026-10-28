@@ -14,8 +14,8 @@ GAIA4, LSPM = 1457486023639239296, 1663617687609809280
 
 def test_per_transit_reduction():
     """Transits combine the used CCDs; a single star keeps its parallax and a good fit."""
-    from gaiabias import dr4
-    from gaiabias.fitting import fit_5par
+    from gedi import dr4
+    from gedi.fitting import fit_5par
     d = dr4.load_ccd_table(DATA)
     assert len(dr4.source_ids(d)) == 12
     ep, y, err, n, G = dr4.source_transits(d, LSPM)
@@ -30,8 +30,8 @@ def test_per_transit_reduction():
 
 def test_orbit_from_transits_matches_published():
     """Gaia-4 b from the per-transit data: P ~ 570-580 d, ~11 M_J (as from the per-CCD data)."""
-    from gaiabias import dr4
-    from gaiabias.fitting import fit_orbit_trend
+    from gedi import dr4
+    from gedi.fitting import fit_orbit_trend
     d = dr4.load_ccd_table(DATA)
     ep, y, err, _, _ = dr4.source_transits(d, GAIA4)
     f = fit_orbit_trend(ep, y, err, 0.64, n_trend=0, P_max=2e4)
@@ -43,8 +43,8 @@ def test_astropy_formats_read_the_same():
     """ECSV written from the VOTable gives the same CCD table (the path the bulk DR4 files will take)."""
     pytest.importorskip("astropy")
     from astropy.table import Table
-    from gaiabias import dr4
-    from gaiabias.dr4_epoch import read_votable_binary2
+    from gedi import dr4
+    from gedi.dr4_epoch import read_votable_binary2
     raw = read_votable_binary2(DATA)
     keep = ["source_id", "transit_id", "centroid_pos_al", "obs_time_tcb", "obs_time_bary_corr", "scan_pos_angle",
             "parallax_factor_al", "centroid_pos_error_al", "ipd_error_al", "agis_source_excess_noise",
@@ -63,12 +63,12 @@ def test_astropy_formats_read_the_same():
 
 
 def test_fit_source_adopts_one_orbit_for_gaia4():
-    from gaiabias import gaiamock_bridge as gb
+    from gedi import gaiamock_bridge as gb
     try:
         gb.gaiamock()
     except Exception:
         pytest.skip("gaiamock not installed")
-    from gaiabias import dr4
+    from gedi import dr4
     d = dr4.load_ccd_table(DATA)
     ep, y, err, _, _ = dr4.source_transits(d, GAIA4)
     r = dr4.fit_source(ep, y, err, 0.64)

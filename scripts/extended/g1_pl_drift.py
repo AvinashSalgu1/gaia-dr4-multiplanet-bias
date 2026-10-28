@@ -53,8 +53,8 @@ def main():
     p.add_argument("--root", default=str(C.REPO / "results" / "step3_allsky"))
     a = p.parse_args()
     import step3 as S3
-    from gaiabias import multiplicity as MU
-    from gaiabias import rates as R
+    from gedi import multiplicity as MU
+    from gedi import rates as R
     from pathlib import Path
 
     z, meta, jobs, d = C.load_step3(Path(a.root))

@@ -62,7 +62,7 @@ def window_share():
 
 def mg_of_mass(m):
     """Main-sequence M_G for a mass in M_sun (the table behind the step 3 masses, extrapolated)."""
-    from gaiabias.population import _MS_MASS, _MS_MG
+    from gedi.population import _MS_MASS, _MS_MG
     m = np.atleast_1d(np.asarray(m, float))
     out = np.interp(m, _MS_MASS, _MS_MG)
     slope = (_MS_MG[1] - _MS_MG[0]) / (_MS_MASS[1] - _MS_MASS[0])
@@ -86,7 +86,7 @@ def photocentre_factor(q, m1):
 def effective_mass_mj(m1, m2_mj, P_days, factor):
     """Dark-companion mass with the same angular reflex orbit as the photocentre."""
     from scipy.optimize import brentq
-    from gaiabias.orbits import reflex_a0_mas
+    from gedi.orbits import reflex_a0_mas
     target = abs(factor) * reflex_a0_mas(m1, m2_mj, P_days, 1.0)
     lo, hi = 1e-6, max(m2_mj, 1e-3) * 1.0001
     if target <= reflex_a0_mas(m1, lo, P_days, 1.0):
@@ -95,8 +95,8 @@ def effective_mass_mj(m1, m2_mj, P_days, factor):
 
 
 def draw_systems(z, n_bd, n_bin, seed=SEED):
-    from gaiabias.constants import MJUP_MSUN
-    from gaiabias.orbits import draw_ecc_kipping
+    from gedi.constants import MJUP_MSUN
+    from gedi.orbits import draw_ecc_kipping
     rng = np.random.default_rng(seed)
     n_star = len(z["star_G"])
     rows = []
@@ -123,9 +123,9 @@ def draw_systems(z, n_bd, n_bin, seed=SEED):
 
 def run_one(r, z, synthetic):
     import step3 as S3
-    from gaiabias.orbits import Companion
-    from gaiabias.simulate import snr1
-    from gaiabias.orbits import reflex_a0_mas
+    from gedi.orbits import Companion
+    from gedi.simulate import snr1
+    from gedi.orbits import reflex_a0_mas
     s = r["star"]
     star = {k: float(z[f"star_{k}"][s]) for k in ("m_star", "G", "parallax", "ra", "dec", "pmra", "pmdec")}
     out = dict(id=r["id"])
@@ -179,8 +179,8 @@ def simulate_and_fit(z, meta, n_bd, n_bin, jobs, synthetic, out):
 
 def contaminant_table(z, meta, out):
     """One row per planet-mass orbit reported for a brown dwarf or binary that passes the DR3 RUWE cut."""
-    from gaiabias.step2 import analyses as A
-    from gaiabias.step2.outcomes import bic_choice, reported
+    from gedi.step2 import analyses as A
+    from gedi.step2.outcomes import bic_choice, reported
     with open(out / "systems.csv") as f:
         sysrows = {r["id"]: r for r in csv.DictReader(f)}
     with open(out / "fits.csv") as f:

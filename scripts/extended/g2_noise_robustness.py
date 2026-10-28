@@ -37,9 +37,9 @@ KEEP = ["seed", "n_transits", "G", "P_t", "m_t", "P_c", "m_c", "rho"]
 
 def make_data(seed, model, synthetic=False):
     """Step 2 system, epochs and noise (identical to step2.sim.make_data for 'baseline')."""
-    from gaiabias import epochs as E
-    from gaiabias.simulate import Star, sigma_al_per_transit, simulate
-    from gaiabias.step2.sim import draw_system
+    from gedi import epochs as E
+    from gedi.simulate import Star, sigma_al_per_transit, simulate
+    from gedi.step2.sim import draw_system
 
     rng = np.random.default_rng(seed)
     s = draw_system(rng)
@@ -70,7 +70,7 @@ def make_data(seed, model, synthetic=False):
 
 
 def run_one(seed, model, synthetic):
-    from gaiabias.step2 import analyses as A
+    from gedi.step2 import analyses as A
     s, ep, single, both, noise = make_data(seed, model, synthetic)
     row = dict(seed=seed, n_transits=len(ep), G=s["G"], P_t=s["target"].P_days, m_t=s["target"].m_mjup,
                P_c=s["comp"].P_days, m_c=s["comp"].m_mjup, rho=np.nan)
@@ -81,8 +81,8 @@ def run_one(seed, model, synthetic):
 
 def run(model, n, jobs, synthetic, out):
     from joblib import Parallel, delayed
-    from gaiabias.step2 import analyses as A
-    from gaiabias.step2.sim import population_seeds
+    from gedi.step2 import analyses as A
+    from gedi.step2.sim import population_seeds
     cols = KEEP + A.all_cols()
     path = out / f"{model}.csv"
     done = set()
@@ -104,7 +104,7 @@ def run(model, n, jobs, synthetic, out):
 
 
 def load(path):
-    from gaiabias.step2 import analyses as A
+    from gedi.step2 import analyses as A
     rows = list(csv.DictReader(open(path)))
     d = {}
     for k in rows[0]:
@@ -114,7 +114,7 @@ def load(path):
 
 
 def analyse(out, n):
-    from gaiabias.step2.outcomes import judge
+    from gedi.step2.outcomes import judge
     res = {}
     for model in MODELS:
         path = out / f"{model}.csv"

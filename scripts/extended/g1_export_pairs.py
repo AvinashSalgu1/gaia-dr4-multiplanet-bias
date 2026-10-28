@@ -35,8 +35,8 @@ def main():
     p.add_argument("--all", action="store_true",
                    help="write every neighbouring pair to data/extended/pairs_all.csv (for the full N-body run)")
     a = p.parse_args()
-    from gaiabias.constants import MJUP_MSUN
-    from gaiabias.orbits import relative_semimajor_axis_au
+    from gedi.constants import MJUP_MSUN
+    from gedi.orbits import relative_semimajor_axis_au
 
     with np.load(a.root / "population.npz") as f:
         z = {k: f[k] for k in f.files}

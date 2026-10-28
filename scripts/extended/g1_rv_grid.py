@@ -72,7 +72,7 @@ def observable_nights(ra_deg, years, rng, weather=0.2):
 
 
 def kepler_rv(t, P, Tp, e, om):
-    from gaiabias.orbits import solve_kepler
+    from gedi.orbits import solve_kepler
     M = 2 * np.pi * (t - Tp) / P
     E = solve_kepler(M, e)
     nu = 2 * np.arctan2(np.sqrt(1 + e) * np.sin(E / 2), np.sqrt(1 - e) * np.cos(E / 2))
@@ -81,7 +81,7 @@ def kepler_rv(t, P, Tp, e, om):
 
 def campaign(rng, m, a_au, V, jit, inst, years, n_list, strategy, inc):
     """Fraction-confirmed flags for each N in n_list, for one simulated system."""
-    from gaiabias.orbits import draw_ecc_kipping
+    from gedi.orbits import draw_ecc_kipping
     P = 365.25 * a_au ** 1.5
     e = float(draw_ecc_kipping(rng))
     om, Tp = rng.uniform(0, 2 * np.pi), rng.uniform(0, P)
