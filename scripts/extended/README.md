@@ -20,6 +20,8 @@ the combined figures from the results.
 | `g2_evidence_truth.py` | Which choice is right, judged against the true systems? | step 2 results, evidence runs | seconds |
 | `g1_rate_binned.py` | Occurrence rate without assuming a power law; injection response matrix | step 3 results | ~1 min |
 | `g1_pl_drift.py` | Why does the power-law rate of planets fitted alone drift with multiplicity? | step 3 results | ~1 min |
+| `g1_scan_cells.py` | Occurrence-rate bias against multiplicity, split by planet mass and by period | step 3 results | ~1 min |
+| `g1_mix_test.py` | Population-mix test: do the corrections depend on the assumed mass and period distribution? | step 3 results | ~2 min |
 | `g1_lw_yield.py` | The step 3 planets counted with the Lammers & Winn rule and noise | step 3 results | seconds |
 | `g2_go_checks.py` | Comparison with Greenfield & Owen: `resoecc`, `single`, `second` (`--prior-scale`) | gaiamock, dynesty | 1–6 h per part (64 cores) |
 | `g1_multiplicity_signal.py` | Does the mix of DR4 solution types constrain how many hosts have a second giant? | step 3 results | ~1 min |

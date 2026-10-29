@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `scripts/extended/g1_scan_cells.py`: occurrence-rate bias against multiplicity split by planet
+  mass and by period (figure `docs/figures/ext_scan_cells.png`).
+- `scripts/extended/g1_mix_test.py`: population-mix test with tilted mass and period slopes, no new
+  fits (figures `docs/figures/ext_mix_mass.png`, `ext_mix_period.png`).
+
 ## 0.3.0 (27 October 2026)
 
 Whole-sky analyses, alternative planet populations, comparisons with published work, the input

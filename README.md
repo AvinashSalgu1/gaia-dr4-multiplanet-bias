@@ -333,6 +333,19 @@ Expected plots (in `results/extended/`):
 
 ![Power-law drift](docs/figures/ext_pl_drift.png)
 
+- `scan_cells/scan_cells_heatmap.png` (`g1_scan_cells.py`) — inferred ÷ true rate against
+  multiplicity, split by period and by mass, for the real systems, the planets alone and their
+  ratio. Expect the largest losses for light, short-period giants and values near 1 for
+  3–13 M_J at 1–8 yr.
+
+![Bias by mass and period](docs/figures/ext_scan_cells.png)
+
+- `mix_test/mix_test_mass.png`, `mix_test_period.png` (`g1_mix_test.py`) — the same ratios when
+  the mass or period slope of the population is tilted. Expect the well-measured region to stay
+  within a few percent of the reference and the poorly measured ranges to move by up to ~2×.
+
+![Population-mix test](docs/figures/ext_mix_mass.png)
+
 - `go_checks/<part>/` (`g2_go_checks.py resoecc | single | second`) — comparison with Greenfield
   & Owen (2026). `resoecc.png`: eccentricity and mass of a one-orbit fit to circular 2:1 pairs
   against the mass ratio, with the analytic e_eff = 1.26 m_in/m_out; expect e ≈ 0.25 at a ratio

@@ -301,6 +301,36 @@ In the reference population the power-law rate of the planets fitted alone (B) r
 
 ![Power-law drift](figures/ext_pl_drift.png)
 
+### Bias by planet mass and period (scripts/extended/g1_scan_cells.py)
+
+The multiplicity scan is split by mass (0.3 to 1, 1 to 3, 3 to 13 M_J) and by period (0.1 to 0.3, 0.3 to 1, 1 to 2, 2 to 4, 4 to 8 yr), with the same host weights as step 3 (nominal weights, true in-window rate fixed per stellar-mass bin). The power law fitted over the whole window is integrated over each range; the binned rate uses only cells with completeness of at least 5%.
+
+- One orbit, f = 80%: the power-law rate of the real systems (A) is 0.37, 0.50 and 0.75 of the truth by increasing mass, and rises from 0.37 at 0.1 to 0.3 yr to 0.73 at 4 to 8 yr. With the BIC choice it is 0.80, 0.86 and 0.99 by mass.
+- The planets fitted alone (B) drift upward in the same ranges (up to 2.1 for 0.3 to 1 M_J), so in poorly measured ranges A combines a multiplicity loss with an upward error of the method, and the two partly cancel. A / B is the cleaner measure of the multiplicity effect (0.18 for 0.3 to 1 M_J and 0.65 for 3 to 13 M_J at f = 80%, one orbit).
+- Binned (measurable cells only): A / truth at f = 80% is 0.93 for 3 to 13 M_J and 0.75, 0.95 and 1.05 at 1 to 2, 2 to 4 and 4 to 8 yr. Only 3 to 13 M_J at 1 to 8 yr can be measured without assuming a shape.
+
+![Bias by mass and period](figures/ext_scan_cells.png)
+
+### Population-mix test (scripts/extended/g1_mix_test.py)
+
+The corrections above are averages over the mass and period distribution of the simulated population. Each host is reweighted by the product over its planets of (m / 1.97 M_J)^Δα (P / 0.89 yr)^Δβ, and the mass slope or the period slope is tilted by −0.6, −0.3, +0.3 and +0.6. The weights are renormalised within each stellar-mass bin and number of giants, so the multiplicity is unchanged, and the in-window rate is fixed per stellar-mass bin. No new fits are needed. The share of 0.3 to 1 M_J giants moves from 32% to 12 to 58%, and the share of 0.1 to 0.3 yr giants from 11% to 2 to 32%.
+
+| At f = 80%, over all eight tilts | One orbit | BIC |
+|---|---|---|
+| 3–13 M_J, 1–8 yr (power law) | 0.83–0.96 (reference 0.90) | 0.91–0.97 (0.97) |
+| 3–13 M_J, 1–8 yr (binned) | 0.90–0.95 (0.93) | 0.85–1.03 (0.93) |
+| Whole window (power law) | 0.38–0.67 (0.53) | 0.77–0.92 (0.88) |
+| 0.3–1 M_J | 0.21–0.54 (0.37) | 0.56–0.85 (0.80) |
+| 0.1–0.3 yr | 0.23–0.88 (0.37) | 0.74–1.51 (0.97) |
+
+- The multiplicity correction for the well-measured region barely depends on the assumed population.
+- Outside it the correction changes by up to a factor of about two, so the mass and period distribution has to be fitted together with the rate and the multiplicity.
+- The binned rate is affected even without multiplicity (0.92 to 1.19 of the truth at 3 to 13 M_J at f = 0), because the completeness of each cell is averaged over the assumed distribution within it.
+
+![Population-mix test, mass slope](figures/ext_mix_mass.png)
+
+![Population-mix test, period slope](figures/ext_mix_period.png)
+
 ### Comparison with Greenfield & Owen (2026) (scripts/extended/g2_go_checks.py)
 
 Greenfield & Owen (2026) study single and two-planet detection in Gaia data with Bayesian model selection, with emphasis on pairs near 2:1. Their set-up was reproduced where they state it: a 1 M_sun star at 16 pc, proper motion (5, −24) mas/yr, sky position (45°, 45°), 30 µas per field-of-view transit, circular face-on orbits (random inclinations as a second case for single planets), "decisive" evidence (log10 Bayes factor > 2). Epochs come from gaiamock's scanning law at the same position; planet-planet interactions are ignored.
